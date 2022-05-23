@@ -18,6 +18,7 @@ while True:
     # Grab the image and convert to RGB. Following this, identifying if there
     # are any hand landmarks.
     success, image = cap.read()
+    image = cv2.flip(image, flipCode=1)
     RGB_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     results = hands.process(RGB_image)
     multiLandMarks = results.multi_hand_landmarks
