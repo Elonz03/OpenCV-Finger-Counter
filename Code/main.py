@@ -1,6 +1,29 @@
 """
 This project was coded following the steps outlined in:
 https://www.section.io/engineering-education/creating-a-finger-counter/#introduction
+
+Hand landmark numbers:
+0. WRIST
+1. THUMB CMC
+2. THUMB MCP
+3. THUMB IP
+4, THUMB TIP
+5. INDEX FINGER MCP
+6. INDEX FINGER PIP
+7. INDEX FINGER DIP
+8. INDEX FINGER TIP
+9. MIDDLE FINGER MCP
+10. MIDDLE FINGER PIP
+11. MIDDLE FINGER DIP
+12. MIDDLE FINGER TIP
+13. RING FINGER MCP
+14. RING FINGER PIP
+15. RING FINGER DIP
+16. RING FINGER TIP
+17. PINKY MCP
+18. PINKY PIP
+19. PINKY DIP
+20. PINKY TIP
 """
 import cv2
 import mediapipe as mp
@@ -21,12 +44,30 @@ def draw_points(hand_list, image):
         cv2.circle(image, point, 10, (255, 255, 0), cv2.FILLED)
 
 
-def finger_count(finger_coord, thumb_coord, hand_list):
+def determine_thumb_position(hand_list):
     """
+    Returns true if thumb is left of wrist. Otherwise, false. Using the x
+    coord. The thumb is left if the x-pos pixel is less than the wrist x-pos
+
     Parameter:
-        finger_coord:
-        thumb_coord:
-        hand_list:
+        hand_list (list): tuple containing the joints coords
+
+    return (bool): If thumb is left of hand or not
+    """
+    thumb_left = False
+    if hand_list[0][0] > hand_list[1][0]:
+        thumb_left = True
+    return thumb_left
+
+
+def finger_count(finger_coord, thumb_coord, hand_list, thumb_left):
+    """
+    Returns the number of fingers/thumb that is up
+    Parameter:
+        finger_coord (list): tuple containing the finger joints
+        thumb_coord (list): tuple containing thumb joints
+        hand_list (list): tuple containing the joints coords
+        thumb_left (bool): position if thumb is left of wrist
 
     return (int): Number of fingers up
     """
@@ -35,8 +76,14 @@ def finger_count(finger_coord, thumb_coord, hand_list):
         if (hand_list[coordinate[0]][1] <
                 hand_list[coordinate[1]][1]):
             up_count += 1
-    if hand_list[thumb_coord[0]][0] > hand_list[thumb_coord[1]][0]:
-        up_count += 1
+    # This uses the x-position of thumb. Can be changed in future to consider
+    # y-position
+    if thumb_left:
+        if hand_list[thumb_coord[0]][0] < hand_list[thumb_coord[1]][0]:
+            up_count += 1
+    else:
+        if hand_list[thumb_coord[0]][0] > hand_list[thumb_coord[1]][0]:
+            up_count += 1
     return up_count
 
 
@@ -68,7 +115,9 @@ def main():
                                        mp_hands.HAND_CONNECTIONS)
                 convert_coords_to_pixels(hand_lms, hand_list, image)
                 draw_points(hand_list, image)
-                up_count = finger_count(finger_coord, thumb_coord, hand_list)
+                thumb_left = determine_thumb_position(hand_list)
+                up_count = finger_count(finger_coord, thumb_coord, hand_list,
+                                        thumb_left)
                 cv2.putText(image, str(up_count), (150, 150),
                             cv2.FONT_HERSHEY_PLAIN,
                             12, (0, 255, 0), 12)
