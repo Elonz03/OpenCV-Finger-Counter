@@ -28,6 +28,8 @@ Hand landmark numbers:
 import cv2
 import mediapipe as mp
 
+from random import randint
+
 
 def convert_coords_to_pixels(hand_lms, hand_list, image):
     # Convert each of the co-ordinates for every landmark to pixel
@@ -36,12 +38,13 @@ def convert_coords_to_pixels(hand_lms, hand_list, image):
         h, w, c = image.shape
         cx, cy = int(lm.x * w), int(lm.y * h)
         hand_list.append((cx, cy))
+    return hand_list
 
 
-def draw_points(hand_list, image):
+def draw_points(hand_list, image, colour):
     # Draw the circles for the landmarks
     for point in hand_list:
-        cv2.circle(image, point, 10, (255, 255, 0), cv2.FILLED)
+        cv2.circle(image, point, 10, colour, cv2.FILLED)
 
 
 def determine_thumb_position(hand_list):
@@ -100,6 +103,7 @@ def main():
     mp_draw = mp.solutions.drawing_utils  # Used to draw the hands
     finger_coord = [(8, 6), (12, 10), (16, 14), (20, 18)]
     thumb_coord = (4, 2)
+    hand_dict = {}
 
     while success:
         # Grab the image and convert to RGB. Following this, identifying if
@@ -109,25 +113,30 @@ def main():
         rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         results = hands.process(rgb_image)
         multi_land_marks = results.multi_hand_landmarks
+        up_count = 0
 
         # Nested for loop used to draw each of the landmarks for each hand,
         # if multiple are present
         if multi_land_marks:
-            hand_list = []
-            for hand_lms in multi_land_marks:
+            for hand_num in range(len(multi_land_marks)):
+                hand_list = []
+                if hand_num not in hand_dict:
+                    hand_dict[hand_num] = (randint(0, 255), randint(0, 255),
+                                           randint(0, 255))
+                colour = hand_dict[hand_num]
+                hand_lms = multi_land_marks[hand_num]
                 mp_draw.draw_landmarks(image, hand_lms,
                                        mp_hands.HAND_CONNECTIONS)
-                convert_coords_to_pixels(hand_lms, hand_list, image)
-                draw_points(hand_list, image)
+                hand_list = convert_coords_to_pixels(hand_lms, hand_list, image)
+                draw_points(hand_list, image, colour)
                 thumb_left = determine_thumb_position(hand_list)
-                up_count = finger_count(finger_coord, thumb_coord, hand_list,
-                                        thumb_left)
-                cv2.putText(image, str(up_count), (150, 150),
-                            cv2.FONT_HERSHEY_PLAIN,
-                            12, (0, 255, 0), 12)
-            cv2.imshow("Counting number of fingers", image)
-            if cv2.waitKey(1) == ord('q'):
-                break
+                up_count += finger_count(finger_coord, thumb_coord, hand_list,
+                                         thumb_left)
+        cv2.putText(image, str(up_count), (150, 150),
+                    cv2.FONT_HERSHEY_PLAIN, 12, (0, 255, 0), 12)
+        cv2.imshow("Counting number of fingers", image)
+        if cv2.waitKey(1) == ord('q'):
+            break
     cap.release()
     cv2.destroyAllWindows()
 
