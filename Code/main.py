@@ -90,6 +90,10 @@ def finger_count(finger_coord, thumb_coord, hand_list, thumb_left):
 def main():
     # Use the web-camera on your device
     cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        print("Cannot open camera")
+        exit()
+    success, image = cap.read()
 
     mp_hands = mp.solutions.hands  # Used to detect hands in the input image
     hands = mp_hands.Hands()  # Used to process the detected hands
@@ -97,7 +101,7 @@ def main():
     finger_coord = [(8, 6), (12, 10), (16, 14), (20, 18)]
     thumb_coord = (4, 2)
 
-    while True:
+    while success:
         # Grab the image and convert to RGB. Following this, identifying if
         # there are any hand landmarks.
         success, image = cap.read()
@@ -122,7 +126,10 @@ def main():
                             cv2.FONT_HERSHEY_PLAIN,
                             12, (0, 255, 0), 12)
             cv2.imshow("Counting number of fingers", image)
-            cv2.waitKey(1)
+            if cv2.waitKey(1) == ord('q'):
+                break
+    cap.release()
+    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
