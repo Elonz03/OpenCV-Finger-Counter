@@ -63,7 +63,8 @@ def determine_thumb_position(hand_list):
     return thumb_left
 
 
-def finger_count(finger_coord, thumb_coord, hand_list, thumb_left):
+def finger_count(finger_coord, thumb_coord, hand_list, thumb_left,
+                 count_decimal):
     """
     Returns the number of fingers/thumb that is up
     Parameter:
@@ -71,6 +72,7 @@ def finger_count(finger_coord, thumb_coord, hand_list, thumb_left):
         thumb_coord (list): tuple containing thumb joints
         hand_list (list): tuple containing the joints coords
         thumb_left (bool): position if thumb is left of wrist
+        count_decimal (bool): determines if counting in decimal
 
     return (int): Number of fingers up
     """
@@ -90,6 +92,45 @@ def finger_count(finger_coord, thumb_coord, hand_list, thumb_left):
     return up_count
 
 
+def keyboard_input(count_decimal, success):
+    """
+    This handles the input from the keyboard
+    Parameter:
+        count_decimal (bool): Determines if counting in decimal or binary
+        success (bool): Determines if program continues
+    return (tuple): boolean values
+    """
+    pressed_key = cv2.waitKey(1)
+    if pressed_key == ord('q'):
+        success = False
+    elif pressed_key == ord('b'):
+        count_decimal = False
+    elif pressed_key == ord('d'):
+        count_decimal = True
+    elif pressed_key == ord('t'):
+        count_decimal = not count_decimal
+    return count_decimal, success
+
+
+def display_text(image, up_count, count_decimal):
+    """
+    This puts the text on the image for when it is shown.
+    Parameter:
+        image (ndarray): array used to represent the image
+        up_count (int): number of fingers that are up
+        count_decimal (bool): determines if it is counting in decimal
+    return: None
+    """
+    if count_decimal:
+        count_str = "Decimal"
+    else:
+        count_str = "Binary"
+    cv2.putText(image, str(up_count), (150, 150),
+                cv2.FONT_HERSHEY_PLAIN, 12, (0, 255, 0), 12)
+    cv2.putText(image, f"Counting in {count_str}", (150, 200),
+                cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255), 2)
+
+
 def main():
     # Use the web-camera on your device
     cap = cv2.VideoCapture(0)
@@ -104,6 +145,7 @@ def main():
     finger_coord = [(8, 6), (12, 10), (16, 14), (20, 18)]
     thumb_coord = (4, 2)
     hand_dict = {}
+    count_decimal = True
 
     while success:
         # Grab the image and convert to RGB. Following this, identifying if
@@ -131,12 +173,12 @@ def main():
                 draw_points(hand_list, image, colour)
                 thumb_left = determine_thumb_position(hand_list)
                 up_count += finger_count(finger_coord, thumb_coord, hand_list,
-                                         thumb_left)
-        cv2.putText(image, str(up_count), (150, 150),
-                    cv2.FONT_HERSHEY_PLAIN, 12, (0, 255, 0), 12)
+                                         thumb_left, count_decimal)
+        count_decimal, success = keyboard_input(count_decimal, success)
+        display_text(image, up_count, count_decimal)
+
         cv2.imshow("Counting number of fingers", image)
-        if cv2.waitKey(1) == ord('q'):
-            break
+
     cap.release()
     cv2.destroyAllWindows()
 
