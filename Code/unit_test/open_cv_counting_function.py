@@ -4,8 +4,10 @@ HAND_NUM = 0  # This is one hand, but its index is 0
 TOT_NUM_HANDS = 1
 
 # Fingers pointing upwards
-LEFT_THUMB_DOWN = [580, 600]
-RIGHT_THUMB_DOWN = [600, 580]  # tip of thumb left / thumb joint x positions
+# HU = Hands upwards
+HU_LEFT_THUMB_DOWN = [580, 600]
+HU_RIGHT_THUMB_DOWN = [600, 580]  # tip of thumb left / thumb joint x positions
+HU_INDEX_DOWN = [324, 284]
 
 HAND_UP_ALL_FINGERS_UP_THUMB_LEFT = [
     [728, 600], [631, 560], [555, 480], [504, 412], [447, 380], [640, 343],
@@ -22,6 +24,7 @@ HAND_UP_ALL_FINGERS_UP_THUMB_RIGHT = [
 ]
 
 # Fingers pointing downwards
+# HD = Hands downwards
 
 
 def test_counting_function_hand_upwards_all_fingers_up_thumb_right():
@@ -60,13 +63,37 @@ def test_counting_function_hand_upwards_thumb_down_thumb_right():
     binary = 0
     hand_list = HAND_UP_ALL_FINGERS_UP_THUMB_RIGHT
 
-    hand_list[THUMB_COORD[0]][0] = RIGHT_THUMB_DOWN[1]
-    hand_list[THUMB_COORD[1]][0] = RIGHT_THUMB_DOWN[0]
+    hand_list[THUMB_COORD[0]][0] = HU_RIGHT_THUMB_DOWN[1]
+    hand_list[THUMB_COORD[1]][0] = HU_RIGHT_THUMB_DOWN[0]
     decimal, binary = finger_count(FINGER_COORD, THUMB_COORD, hand_list,
                                    thumb_left, HAND_NUM, TOT_NUM_HANDS,
                                    decimal, binary)
     assert decimal == 4
     assert binary == 30
+
+
+def test_counting_function_hand_upwards_index_down_thumb_right():
+    """
+    All fingers up for one hand, except for the index finger. Should return 4 in
+    decimal and 29 in binary.
+
+    Thumb joint is indexed as 6 and 8 in hand_list. We care about the x-pos
+    for whether it is up of not
+
+    return: None
+    """
+    thumb_left = False
+    decimal = 0
+    binary = 0
+    hand_list = HAND_UP_ALL_FINGERS_UP_THUMB_RIGHT
+    index_finger = FINGER_COORD[0]
+    hand_list[index_finger[0]][1] = HU_INDEX_DOWN[0]
+    hand_list[index_finger[1]][1] = HU_INDEX_DOWN[1]
+    decimal, binary = finger_count(FINGER_COORD, THUMB_COORD, hand_list,
+                                   thumb_left, HAND_NUM, TOT_NUM_HANDS,
+                                   decimal, binary)
+    assert decimal == 4
+    assert binary == 29
 
 
 def test_counting_function_hand_upwards_all_fingers_up_thumb_left():
@@ -103,8 +130,8 @@ def test_counting_function_hand_upwards_thumb_down_thumb_left():
     decimal = 0
     binary = 0
     hand_list = HAND_UP_ALL_FINGERS_UP_THUMB_LEFT
-    hand_list[THUMB_COORD[0]][0] = LEFT_THUMB_DOWN[1]
-    hand_list[THUMB_COORD[1]][0] = LEFT_THUMB_DOWN[0]
+    hand_list[THUMB_COORD[0]][0] = HU_LEFT_THUMB_DOWN[1]
+    hand_list[THUMB_COORD[1]][0] = HU_LEFT_THUMB_DOWN[0]
     decimal, binary = finger_count(FINGER_COORD, THUMB_COORD, hand_list,
                                    thumb_left, HAND_NUM, TOT_NUM_HANDS,
                                    decimal, binary)
