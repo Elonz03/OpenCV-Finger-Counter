@@ -105,7 +105,10 @@ def finger_count(finger_coord, thumb_coord, hand_list, thumb_left, hand_num,
     finger_binary_constant = binary_exponent
     for finger_index in range(len(finger_coord)):
         coordinate = finger_coord[finger_index]
-        binary_exponent = finger_binary_constant - finger_index
+        if thumb_left:
+            binary_exponent = finger_binary_constant - finger_index
+        else:
+            binary_exponent = finger_index + 1
         if (hand_list[coordinate[0]][1] <
                 hand_list[coordinate[1]][1]):
             decimal += 1
