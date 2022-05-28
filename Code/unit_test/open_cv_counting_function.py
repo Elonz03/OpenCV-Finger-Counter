@@ -37,6 +37,17 @@ def hands_up_thumb_right():
     return hand_up_all_fingers_up_thumb_right
 
 
+@pytest.fixture
+def hands_down_thumb_left():
+    hand_down_all_fingers_up_thumb_left = [
+        [525, 135], [489, 201], [462, 262], [423, 303], [387, 333], [556, 333],
+        [547, 414], [542, 465], [540, 512], [590, 317], [621, 405], [641, 460],
+        [661, 510], [612, 280], [655, 354], [682, 406], [705, 456], [625, 229],
+        [667, 271], [691, 306], [713, 344]
+    ]
+    return hand_down_all_fingers_up_thumb_left
+
+
 def test_counting_function_hand_upwards_all_fingers_up_thumb_right(
         hands_up_thumb_right):
     """
@@ -315,3 +326,25 @@ def test_counting_function_hand_upwards_pinky_down_thumb_left(
                                    decimal, binary)
     assert decimal == 4
     assert binary == 30
+
+
+def test_counting_function_hand_upwards_all_fingers_up_thumb_left(
+        hands_down_thumb_left):
+    """
+    All fingers up for one hand. Should return 5 in decimal and 31 in
+    binary.
+    Thumb left is from the perspective of the user to the device.
+    The hand is upside down
+
+    return: None
+    """
+    thumb_left = True
+    decimal = 0
+    binary = 0
+
+    decimal, binary = finger_count(FINGER_COORD, THUMB_COORD,
+                                   hands_down_thumb_left,
+                                   thumb_left, HAND_NUM, TOT_NUM_HANDS,
+                                   decimal, binary)
+    assert decimal == 5
+    assert binary == 31
