@@ -328,7 +328,7 @@ def test_counting_function_hand_upwards_pinky_down_thumb_left(
     assert binary == 30
 
 
-def test_counting_function_hand_upwards_all_fingers_up_thumb_left(
+def test_counting_function_hand_downwards_all_fingers_up_thumb_left(
         hands_down_thumb_left):
     """
     All fingers up for one hand. Should return 5 in decimal and 31 in
