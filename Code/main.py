@@ -50,6 +50,31 @@ def draw_points(hand_list, image, colour):
         cv2.circle(image, point, 10, colour, cv2.FILLED)
 
 
+def finger_position_relative_to_wrist(hand_list, finger_coord, thumb=False):
+    wrist_x_pos = hand_list[0][0]
+    wrist_y_pos = hand_list[0][1]
+    normalised_fingers_pos = []
+    for coordinate in finger_coord:
+        finger_pos = []
+        for finger_point in coordinate:
+            x_pos = hand_list[finger_point][0]
+            y_pos = hand_list[finger_point][1]
+            x_len = wrist_x_pos - x_pos
+            y_len = wrist_y_pos - y_pos
+            if abs(y_len) > abs(x_len):
+                if thumb:
+                    finger_pos.append(abs(x_len))
+                else:
+                    finger_pos.append(abs(y_len))
+            else:
+                if thumb:
+                    finger_pos.append(abs(y_len))
+                else:
+                    finger_pos.append(abs(x_len))
+        normalised_fingers_pos.append(finger_pos)
+    return normalised_fingers_pos
+
+
 def determine_thumb_position(hand_list):
     """
     Returns true if thumb is left of wrist. Otherwise, false. Using the x
@@ -61,7 +86,9 @@ def determine_thumb_position(hand_list):
     return (bool): If thumb is left of hand or not
     """
     thumb_left = False
-    if hand_list[0][0] > hand_list[1][0]:
+    wrist = hand_list[0][0]
+    thumb_knuckle = hand_list[1][0]
+    if wrist > thumb_knuckle:
         thumb_left = True
     return thumb_left
 
