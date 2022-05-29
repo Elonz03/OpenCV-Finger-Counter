@@ -1,18 +1,11 @@
 import pytest
 
-from main import finger_count, THUMB_COORD, FINGER_COORD
+from main import (THUMB_COORD, FINGER_COORD,
+                  finger_position_relative_to_wrist, finger_counter,
+                  determine_thumb_position)
 
 HAND_NUM = 0  # This is one hand, but its index is 0
 TOT_NUM_HANDS = 1
-
-# Fingers pointing upwards
-# HU = Hands upwards
-HU_LEFT_THUMB_DOWN = [580, 600]
-HU_RIGHT_THUMB_DOWN = [600, 580]  # tip of thumb left / thumb joint x positions
-HU_FINGER_DOWN = [330, 280]
-
-# Fingers pointing downwards
-# HD = Hands downwards
 
 
 @pytest.fixture
@@ -48,6 +41,17 @@ def hands_down_thumb_left():
     return hand_down_all_fingers_up_thumb_left
 
 
+@pytest.fixture
+def hands_down_thumb_right():
+    hand_down_all_fingers_up_thumb_right = [
+        [688, 324], [753, 294], [818, 301], [860, 328], [914, 350], [808, 424],
+        [838, 487], [847, 530], [848, 574], [746, 458], [762, 538], [762, 588],
+        [756, 634], [682, 465], [680, 545], [669, 594], [658, 638], [619, 452],
+        [579, 518], [546, 558], [518, 596]
+    ]
+    return hand_down_all_fingers_up_thumb_right
+
+
 def test_counting_function_hand_upwards_all_fingers_up_thumb_right(
         hands_up_thumb_right):
     """
@@ -57,136 +61,20 @@ def test_counting_function_hand_upwards_all_fingers_up_thumb_right(
 
     return: None
     """
-    thumb_left = False
     decimal = 0
     binary = 0
 
-    decimal, binary = finger_count(FINGER_COORD, THUMB_COORD,
-                                   hands_up_thumb_right,
-                                   thumb_left, HAND_NUM, TOT_NUM_HANDS,
-                                   decimal, binary)
+    finger_list = finger_position_relative_to_wrist(hands_up_thumb_right,
+                                                    THUMB_COORD,
+                                                    thumb=True)
+    finger_list += finger_position_relative_to_wrist(hands_up_thumb_right,
+                                                     FINGER_COORD,
+                                                     thumb=False)
+    finger_list = determine_thumb_position(hands_up_thumb_right, finger_list)
+    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
+                                     decimal, binary)
     assert decimal == 5
     assert binary == 31
-
-
-def test_counting_function_hand_upwards_thumb_down_thumb_right(
-        hands_up_thumb_right):
-    """
-    All fingers up for one hand, except for the thumb. Should return 4 in
-    decimal and 30 in binary.
-    Thumb right is from the perspective of the user to the device.
-
-    Thumb joint is indexed as 2 and 4 in hand_list. We care about the x-pos
-    for whether it is up of not
-
-    return: None
-    """
-    thumb_left = False
-    decimal = 0
-    binary = 0
-    hand_list = hands_up_thumb_right
-
-    hand_list[THUMB_COORD[0]][0] = HU_RIGHT_THUMB_DOWN[1]
-    hand_list[THUMB_COORD[1]][0] = HU_RIGHT_THUMB_DOWN[0]
-    decimal, binary = finger_count(FINGER_COORD, THUMB_COORD, hand_list,
-                                   thumb_left, HAND_NUM, TOT_NUM_HANDS,
-                                   decimal, binary)
-    assert decimal == 4
-    assert binary == 30
-
-
-def test_counting_function_hand_upwards_index_down_thumb_right(
-        hands_up_thumb_right):
-    """
-    All fingers up for one hand, except for the index finger. Should return 4 in
-    decimal and 29 in binary.
-
-    Thumb joint is indexed as 6 and 8 in hand_list. We care about the y-pos
-    for whether it is up of not
-
-    return: None
-    """
-    thumb_left = False
-    decimal = 0
-    binary = 0
-    hand_list = hands_up_thumb_right
-    index_finger = FINGER_COORD[0]
-    hand_list[index_finger[0]][1] = HU_FINGER_DOWN[0]
-    hand_list[index_finger[1]][1] = HU_FINGER_DOWN[1]
-    decimal, binary = finger_count(FINGER_COORD, THUMB_COORD, hand_list,
-                                   thumb_left, HAND_NUM, TOT_NUM_HANDS,
-                                   decimal, binary)
-    assert decimal == 4
-    assert binary == 29
-
-
-def test_counting_function_hand_upwards_middle_down_thumb_right(
-        hands_up_thumb_right):
-    """
-    All fingers up for one hand, except for the middle finger. Should return
-    4 in decimal and 27 in binary.
-
-    Thumb joint is indexed as 10 and 12 in hand_list. We care about the y-pos
-    for whether it is up of not
-
-    return: None
-    """
-    thumb_left = False
-    decimal = 0
-    binary = 0
-    hand_list = hands_up_thumb_right
-    middle_finger = FINGER_COORD[1]
-    hand_list[middle_finger[0]][1] = HU_FINGER_DOWN[0]
-    hand_list[middle_finger[1]][1] = HU_FINGER_DOWN[1]
-    decimal, binary = finger_count(FINGER_COORD, THUMB_COORD, hand_list,
-                                   thumb_left, HAND_NUM, TOT_NUM_HANDS,
-                                   decimal, binary)
-    assert decimal == 4
-    assert binary == 27
-
-
-def test_counting_function_hand_upwards_ring_down_thumb_right(
-        hands_up_thumb_right):
-    """
-    All fingers up for one hand, except for the ring finger. Should return 4 in
-    decimal and 25 in binary.
-
-    return: None
-    """
-    thumb_left = False
-    decimal = 0
-    binary = 0
-    hand_list = hands_up_thumb_right
-    ring_finger = FINGER_COORD[2]
-    hand_list[ring_finger[0]][1] = HU_FINGER_DOWN[0]
-    hand_list[ring_finger[1]][1] = HU_FINGER_DOWN[1]
-    decimal, binary = finger_count(FINGER_COORD, THUMB_COORD, hand_list,
-                                   thumb_left, HAND_NUM, TOT_NUM_HANDS,
-                                   decimal, binary)
-    assert decimal == 4
-    assert binary == 23
-
-
-def test_counting_function_hand_upwards_pinky_down_thumb_right(
-        hands_up_thumb_right):
-    """
-    All fingers up for one hand, except for the middle finger. Should return
-    4 in decimal and 15 in binary.
-
-    return: None
-    """
-    thumb_left = False
-    decimal = 0
-    binary = 0
-    hand_list = hands_up_thumb_right
-    pinky_finger = FINGER_COORD[3]
-    hand_list[pinky_finger[0]][1] = HU_FINGER_DOWN[0]
-    hand_list[pinky_finger[1]][1] = HU_FINGER_DOWN[1]
-    decimal, binary = finger_count(FINGER_COORD, THUMB_COORD, hand_list,
-                                   thumb_left, HAND_NUM, TOT_NUM_HANDS,
-                                   decimal, binary)
-    assert decimal == 4
-    assert binary == 15
 
 
 def test_counting_function_hand_upwards_all_fingers_up_thumb_left(
@@ -198,134 +86,20 @@ def test_counting_function_hand_upwards_all_fingers_up_thumb_left(
 
     return: None
     """
-    thumb_left = True
     decimal = 0
     binary = 0
-    decimal, binary = finger_count(FINGER_COORD, THUMB_COORD,
-                                   hands_up_thumb_left,
-                                   thumb_left, HAND_NUM, TOT_NUM_HANDS,
-                                   decimal, binary)
+
+    finger_list = finger_position_relative_to_wrist(hands_up_thumb_left,
+                                                    THUMB_COORD,
+                                                    thumb=True)
+    finger_list += finger_position_relative_to_wrist(hands_up_thumb_left,
+                                                     FINGER_COORD,
+                                                     thumb=False)
+    finger_list = determine_thumb_position(hands_up_thumb_left, finger_list)
+    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
+                                     decimal, binary)
     assert decimal == 5
     assert binary == 31
-
-
-def test_counting_function_hand_upwards_thumb_down_thumb_left(
-        hands_up_thumb_left):
-    """
-    All fingers up for one hand, except for the thumb. Should return 4 in
-    decimal and 15 in binary.
-    Thumb left is from the perspective of the user to the device.
-
-    Thumb joint is indexed as 2 and 4 in hand_list. We care about the x-pos
-    for whether it is up of not
-
-    return: None
-    """
-    thumb_left = True
-    decimal = 0
-    binary = 0
-    hand_list = hands_up_thumb_left
-    hand_list[THUMB_COORD[0]][0] = HU_LEFT_THUMB_DOWN[1]
-    hand_list[THUMB_COORD[1]][0] = HU_LEFT_THUMB_DOWN[0]
-    decimal, binary = finger_count(FINGER_COORD, THUMB_COORD, hand_list,
-                                   thumb_left, HAND_NUM, TOT_NUM_HANDS,
-                                   decimal, binary)
-    assert decimal == 4
-    assert binary == 15
-
-
-def test_counting_function_hand_upwards_index_down_thumb_left(
-        hands_up_thumb_left):
-    """
-    All fingers up for one hand, except for the index finger. Should return 4 in
-    decimal and 29 in binary.
-
-    Thumb joint is indexed as 6 and 8 in hand_list. We care about the y-pos
-    for whether it is up of not
-
-    return: None
-    """
-    thumb_left = True
-    decimal = 0
-    binary = 0
-    hand_list = hands_up_thumb_left
-    index_finger = FINGER_COORD[0]
-    hand_list[index_finger[0]][1] = HU_FINGER_DOWN[0]
-    hand_list[index_finger[1]][1] = HU_FINGER_DOWN[1]
-    decimal, binary = finger_count(FINGER_COORD, THUMB_COORD, hand_list,
-                                   thumb_left, HAND_NUM, TOT_NUM_HANDS,
-                                   decimal, binary)
-    assert decimal == 4
-    assert binary == 23
-
-
-def test_counting_function_hand_upwards_middle_down_thumb_left(
-        hands_up_thumb_left):
-    """
-    All fingers up for one hand, except for the middle finger. Should return
-    4 in decimal and 27 in binary.
-
-    Thumb joint is indexed as 10 and 12 in hand_list. We care about the y-pos
-    for whether it is up of not
-
-    return: None
-    """
-    thumb_left = True
-    decimal = 0
-    binary = 0
-    hand_list = hands_up_thumb_left
-    middle_finger = FINGER_COORD[1]
-    hand_list[middle_finger[0]][1] = HU_FINGER_DOWN[0]
-    hand_list[middle_finger[1]][1] = HU_FINGER_DOWN[1]
-    decimal, binary = finger_count(FINGER_COORD, THUMB_COORD, hand_list,
-                                   thumb_left, HAND_NUM, TOT_NUM_HANDS,
-                                   decimal, binary)
-    assert decimal == 4
-    assert binary == 27
-
-
-def test_counting_function_hand_upwards_ring_down_thumb_left(
-        hands_up_thumb_left):
-    """
-    All fingers up for one hand, except for the ring finger. Should return 4 in
-    decimal and 25 in binary.
-
-    return: None
-    """
-    thumb_left = True
-    decimal = 0
-    binary = 0
-    hand_list = hands_up_thumb_left
-    ring_finger = FINGER_COORD[2]
-    hand_list[ring_finger[0]][1] = HU_FINGER_DOWN[0]
-    hand_list[ring_finger[1]][1] = HU_FINGER_DOWN[1]
-    decimal, binary = finger_count(FINGER_COORD, THUMB_COORD, hand_list,
-                                   thumb_left, HAND_NUM, TOT_NUM_HANDS,
-                                   decimal, binary)
-    assert decimal == 4
-    assert binary == 29
-
-
-def test_counting_function_hand_upwards_pinky_down_thumb_left(
-        hands_up_thumb_left):
-    """
-    All fingers up for one hand, except for the middle finger. Should return
-    4 in decimal and 15 in binary.
-
-    return: None
-    """
-    thumb_left = True
-    decimal = 0
-    binary = 0
-    hand_list = hands_up_thumb_left
-    pinky_finger = FINGER_COORD[3]
-    hand_list[pinky_finger[0]][1] = HU_FINGER_DOWN[0]
-    hand_list[pinky_finger[1]][1] = HU_FINGER_DOWN[1]
-    decimal, binary = finger_count(FINGER_COORD, THUMB_COORD, hand_list,
-                                   thumb_left, HAND_NUM, TOT_NUM_HANDS,
-                                   decimal, binary)
-    assert decimal == 4
-    assert binary == 30
 
 
 def test_counting_function_hand_downwards_all_fingers_up_thumb_left(
@@ -338,13 +112,203 @@ def test_counting_function_hand_downwards_all_fingers_up_thumb_left(
 
     return: None
     """
-    thumb_left = True
     decimal = 0
     binary = 0
 
-    decimal, binary = finger_count(FINGER_COORD, THUMB_COORD,
-                                   hands_down_thumb_left,
-                                   thumb_left, HAND_NUM, TOT_NUM_HANDS,
-                                   decimal, binary)
+    finger_list = finger_position_relative_to_wrist(hands_down_thumb_left,
+                                                    THUMB_COORD,
+                                                    thumb=True)
+    finger_list += finger_position_relative_to_wrist(hands_down_thumb_left,
+                                                     FINGER_COORD,
+                                                     thumb=False)
+    finger_list = determine_thumb_position(hands_down_thumb_left, finger_list)
+    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
+                                     decimal, binary)
     assert decimal == 5
     assert binary == 31
+
+
+def test_counting_function_hand_downwards_all_fingers_up_thumb_right(
+        hands_down_thumb_right):
+    """
+    All fingers up for one hand. Should return 5 in decimal and 31 in
+    binary.
+    Thumb left is from the perspective of the user to the device.
+    The hand is upside down
+
+    return: None
+    """
+    decimal = 0
+    binary = 0
+
+    finger_list = finger_position_relative_to_wrist(hands_down_thumb_right,
+                                                    THUMB_COORD,
+                                                    thumb=True)
+    finger_list += finger_position_relative_to_wrist(hands_down_thumb_right,
+                                                     FINGER_COORD,
+                                                     thumb=False)
+    finger_list = determine_thumb_position(hands_down_thumb_right, finger_list)
+    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
+                                     decimal, binary)
+    assert decimal == 5
+    assert binary == 31
+
+
+@pytest.mark.parametrize("test_input,expected",
+                         [
+                             (THUMB_COORD[0], [4, 30]),  # thumb down
+                             (FINGER_COORD[0], [4, 29]),  # index down
+                             (FINGER_COORD[1], [4, 27]),  # middle down
+                             (FINGER_COORD[2], [4, 23]),  # ring down
+                             (FINGER_COORD[3], [4, 15])  # pinky down
+                         ]
+                         )
+def test_counting_function_hand_upwards_thumb_right(
+        test_input, expected, hands_up_thumb_right):
+    """
+    The position of this hand has the fingers pointing upwards, with the
+    thumb on the right side. This test alternates between fingers putting
+    them 'down' by switching the co-ordinates of the joints and
+    fingertips.
+
+    return: None
+    """
+    decimal = 0
+    binary = 0
+    hand_list = hands_up_thumb_right
+    temp_list = hand_list[test_input[0]]
+
+    hand_list[test_input[0]] = hand_list[test_input[1]]
+    hand_list[test_input[1]] = temp_list
+
+    finger_list = finger_position_relative_to_wrist(hand_list,
+                                                    THUMB_COORD,
+                                                    thumb=True)
+    finger_list += finger_position_relative_to_wrist(hand_list,
+                                                     FINGER_COORD,
+                                                     thumb=False)
+    finger_list = determine_thumb_position(hand_list, finger_list)
+    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
+                                     decimal, binary)
+    assert decimal == expected[0]
+    assert binary == expected[1]
+
+
+@pytest.mark.parametrize("test_input,expected",
+                         [
+                             (THUMB_COORD[0], [4, 15]),  # thumb down
+                             (FINGER_COORD[0], [4, 23]),  # index down
+                             (FINGER_COORD[1], [4, 27]),  # middle down
+                             (FINGER_COORD[2], [4, 29]),  # ring down
+                             (FINGER_COORD[3], [4, 30])  # pinky down
+                         ]
+                         )
+def test_counting_function_hand_upwards_thumb_left(
+        test_input, expected, hands_up_thumb_left):
+    """
+    The position of this hand has the fingers pointing upwards, with the
+    thumb on the left side. This test alternates between fingers putting
+    them 'down' by switching the co-ordinates of the joints and
+    fingertips.
+
+    return: None
+    """
+    decimal = 0
+    binary = 0
+    hand_list = hands_up_thumb_left
+    temp_list = hand_list[test_input[0]]
+
+    hand_list[test_input[0]] = hand_list[test_input[1]]
+    hand_list[test_input[1]] = temp_list
+
+    finger_list = finger_position_relative_to_wrist(hand_list,
+                                                    THUMB_COORD,
+                                                    thumb=True)
+    finger_list += finger_position_relative_to_wrist(hand_list,
+                                                     FINGER_COORD,
+                                                     thumb=False)
+    finger_list = determine_thumb_position(hand_list, finger_list)
+    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
+                                     decimal, binary)
+    assert decimal == expected[0]
+    assert binary == expected[1]
+
+
+@pytest.mark.parametrize("test_input,expected",
+                         [
+                             (THUMB_COORD[0], [4, 15]),  # thumb down
+                             (FINGER_COORD[0], [4, 23]),  # index down
+                             (FINGER_COORD[1], [4, 27]),  # middle down
+                             (FINGER_COORD[2], [4, 29]),  # ring down
+                             (FINGER_COORD[3], [4, 30])  # pinky down
+                         ]
+                         )
+def test_counting_function_hand_downwards_thumb_left(
+        test_input, expected, hands_down_thumb_left):
+    """
+    The position of this hand has the fingers pointing downwards, with the
+    thumb on the left side. This test alternates between fingers putting
+    them 'down' by switching the co-ordinates of the joints and
+    fingertips.
+
+    return: None
+    """
+    decimal = 0
+    binary = 0
+    hand_list = hands_down_thumb_left
+    temp_list = hand_list[test_input[0]]
+
+    hand_list[test_input[0]] = hand_list[test_input[1]]
+    hand_list[test_input[1]] = temp_list
+
+    finger_list = finger_position_relative_to_wrist(hand_list,
+                                                    THUMB_COORD,
+                                                    thumb=True)
+    finger_list += finger_position_relative_to_wrist(hand_list,
+                                                     FINGER_COORD,
+                                                     thumb=False)
+    finger_list = determine_thumb_position(hand_list, finger_list)
+    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
+                                     decimal, binary)
+    assert decimal == expected[0]
+    assert binary == expected[1]
+
+
+@pytest.mark.parametrize("test_input,expected",
+                         [
+                             (THUMB_COORD[0], [4, 30]),  # thumb down
+                             (FINGER_COORD[0], [4, 29]),  # index down
+                             (FINGER_COORD[1], [4, 27]),  # middle down
+                             (FINGER_COORD[2], [4, 23]),  # ring down
+                             (FINGER_COORD[3], [4, 15])  # pinky down
+                         ]
+                         )
+def test_counting_function_hand_downwards_thumb_right(
+        test_input, expected, hands_down_thumb_right):
+    """
+    The position of this hand has the fingers pointing downwards, with the
+    thumb on the left side. This test alternates between fingers putting
+    them 'down' by switching the co-ordinates of the joints and
+    fingertips.
+
+    return: None
+    """
+    decimal = 0
+    binary = 0
+    hand_list = hands_down_thumb_right
+    temp_list = hand_list[test_input[0]]
+
+    hand_list[test_input[0]] = hand_list[test_input[1]]
+    hand_list[test_input[1]] = temp_list
+
+    finger_list = finger_position_relative_to_wrist(hand_list,
+                                                    THUMB_COORD,
+                                                    thumb=True)
+    finger_list += finger_position_relative_to_wrist(hand_list,
+                                                     FINGER_COORD,
+                                                     thumb=False)
+    finger_list = determine_thumb_position(hand_list, finger_list)
+    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
+                                     decimal, binary)
+    assert decimal == expected[0]
+    assert binary == expected[1]

@@ -31,7 +31,7 @@ import mediapipe as mp
 from random import randint
 
 FINGER_COORD = [(8, 6), (12, 10), (16, 14), (20, 18)]
-THUMB_COORD = (4, 2)
+THUMB_COORD = [(4, 2), ]
 
 
 def convert_coords_to_pixels(hand_lms, hand_list, image):
@@ -75,26 +75,27 @@ def finger_position_relative_to_wrist(hand_list, finger_coord, thumb=False):
     return normalised_fingers_pos
 
 
-def determine_thumb_position(hand_list):
+def determine_thumb_position(hand_list, finger_list):
     """
-    Returns true if thumb is left of wrist. Otherwise, false. Using the x
-    coord. The thumb is left if the x-pos pixel is less than the wrist x-pos
+    Determines the order of the list. When given the list the thumb is the
+    first item on the list. But, if the thumb is on the right side of the
+    hand (from user facing the screen), then the list needs to be reversed. 
 
     Parameter:
         hand_list (list): tuple containing the joints coords
+        finger_list (list): list containing the x or y points of the joints
 
-    return (bool): If thumb is left of hand or not
+    return (list): list of fingers points in order from left to right of the
+    screen
     """
-    thumb_left = False
     wrist = hand_list[0][0]
     thumb_knuckle = hand_list[1][0]
-    if wrist > thumb_knuckle:
-        thumb_left = True
-    return thumb_left
+    if thumb_knuckle > wrist:
+        finger_list.reverse()
+    return finger_list
 
 
-def finger_count(finger_coord, thumb_coord, hand_list, thumb_left, hand_num,
-                 tot_num_of_hands, decimal, binary):
+def finger_counter(finger_list, hand_num, tot_num_of_hands, decimal, binary):
     """
     Returns the number of fingers/thumbs that are up.
     Additionally, it calculates the binary representation if each finger is a
@@ -103,10 +104,7 @@ def finger_count(finger_coord, thumb_coord, hand_list, thumb_left, hand_num,
     Leftmost finger on screen is 2**(5*tot_num_hands). Rightmost is 2**0
 
     Parameter:
-        finger_coord (list): tuple containing the finger joints
-        thumb_coord (list): tuple containing thumb joints
-        hand_list (list): tuple containing the joints coords
-        thumb_left (bool): position if thumb is left of wrist
+        finger_list (list): list containing the x or y points of the joints
         hand_num (int): number of the hand that is being counted
         tot_num_of_hands (int): total number of hands on screen
         decimal (int): current total number of fingers counted
@@ -114,33 +112,15 @@ def finger_count(finger_coord, thumb_coord, hand_list, thumb_left, hand_num,
 
     return (tuple): Number of fingers up, binary count
     """
-    #  Exponent counted from number of hands times fingers minus one as the
-    #  last finger is in the position 2**0.
     binary_exponent = ((tot_num_of_hands - hand_num) * 5) - 1
-    if thumb_left:
-        # TODO: Change logic to account for thumb y position instead of
-        #  just x position
-        if hand_list[thumb_coord[0]][0] < hand_list[thumb_coord[1]][0]:
-            decimal += 1
+    for finger in finger_list:
+        finger_tip = finger[0]
+        finger_joint = finger[1]
+
+        if finger_tip > finger_joint:
             binary += 2**binary_exponent
+            decimal += 1
         binary_exponent -= 1
-    else:
-        if hand_list[thumb_coord[0]][0] > hand_list[thumb_coord[1]][0]:
-            decimal += 1
-            binary += 2 ** (binary_exponent - 4)
-
-    finger_binary_constant = binary_exponent
-    for finger_index in range(len(finger_coord)):
-        coordinate = finger_coord[finger_index]
-        if thumb_left:
-            binary_exponent = finger_binary_constant - finger_index
-        else:
-            binary_exponent = finger_index + 1
-        if (hand_list[coordinate[0]][1] <
-                hand_list[coordinate[1]][1]):
-            decimal += 1
-            binary += 2**binary_exponent
-
     return decimal, binary
 
 
@@ -230,10 +210,17 @@ def main():
                                        mp_hands.HAND_CONNECTIONS)
                 hand_list = convert_coords_to_pixels(hand_lms, hand_list, image)
                 draw_points(hand_list, image, colour)
-                thumb_left = determine_thumb_position(hand_list)
-                decimal, binary = finger_count(
-                    FINGER_COORD, THUMB_COORD, hand_list, thumb_left,
-                    hand_num, tot_num_of_hands, decimal, binary)
+                finger_list = finger_position_relative_to_wrist(hand_list,
+                                                                THUMB_COORD,
+                                                                thumb=True)
+                finger_list += finger_position_relative_to_wrist(hand_list,
+                                                                 FINGER_COORD,
+                                                                 thumb=False)
+
+                finger_list = determine_thumb_position(hand_list, finger_list)
+                decimal, binary = finger_counter(finger_list, hand_num,
+                                                 tot_num_of_hands, decimal,
+                                                 binary)
         count_decimal, success = keyboard_input(count_decimal, success)
         display_text(image, decimal, binary, count_decimal)
 
