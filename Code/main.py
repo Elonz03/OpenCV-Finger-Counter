@@ -31,7 +31,7 @@ import mediapipe as mp
 from random import randint
 
 FINGER_COORD = [(8, 6), (12, 10), (16, 14), (20, 18)]
-THUMB_COORD = [(4, 2), ]
+THUMB_COORD = [(4, 5), ]  # Thumb tip and index MCP
 
 
 def convert_coords_to_pixels(hand_lms, hand_list, image):
@@ -50,27 +50,26 @@ def draw_points(hand_list, image, colour):
         cv2.circle(image, point, 10, colour, cv2.FILLED)
 
 
-def finger_position_relative_to_wrist(hand_list, finger_coord, thumb=False):
-    wrist_x_pos = hand_list[0][0]
-    wrist_y_pos = hand_list[0][1]
+def finger_position_relative_to_focal_point(hand_list, finger_coord,
+                                            thumb=False):
+    if thumb:
+        focal_index = 17  # pinky MCP
+    else:
+        focal_index = 0  # wrist
+    focal_x_pos = hand_list[focal_index][0]
+    focal_y_pos = hand_list[focal_index][1]
     normalised_fingers_pos = []
     for coordinate in finger_coord:
         finger_pos = []
         for finger_point in coordinate:
             x_pos = hand_list[finger_point][0]
             y_pos = hand_list[finger_point][1]
-            x_len = wrist_x_pos - x_pos
-            y_len = wrist_y_pos - y_pos
+            x_len = focal_x_pos - x_pos
+            y_len = focal_y_pos - y_pos
             if abs(y_len) > abs(x_len):
-                if thumb:
-                    finger_pos.append(abs(x_len))
-                else:
-                    finger_pos.append(abs(y_len))
+                finger_pos.append(abs(y_len))
             else:
-                if thumb:
-                    finger_pos.append(abs(y_len))
-                else:
-                    finger_pos.append(abs(x_len))
+                finger_pos.append(abs(x_len))
         normalised_fingers_pos.append(finger_pos)
     return normalised_fingers_pos
 
@@ -210,12 +209,10 @@ def main():
                                        mp_hands.HAND_CONNECTIONS)
                 hand_list = convert_coords_to_pixels(hand_lms, hand_list, image)
                 draw_points(hand_list, image, colour)
-                finger_list = finger_position_relative_to_wrist(hand_list,
-                                                                THUMB_COORD,
-                                                                thumb=True)
-                finger_list += finger_position_relative_to_wrist(hand_list,
-                                                                 FINGER_COORD,
-                                                                 thumb=False)
+                finger_list = finger_position_relative_to_focal_point(
+                    hand_list, THUMB_COORD, thumb=True)
+                finger_list += finger_position_relative_to_focal_point(
+                    hand_list, FINGER_COORD, thumb=False)
 
                 finger_list = determine_thumb_position(hand_list, finger_list)
                 decimal, binary = finger_counter(finger_list, hand_num,

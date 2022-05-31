@@ -1,7 +1,7 @@
 import pytest
 
 from main import (THUMB_COORD, FINGER_COORD,
-                  finger_position_relative_to_wrist, finger_counter,
+                  finger_position_relative_to_focal_point, finger_counter,
                   determine_thumb_position)
 
 HAND_NUM = 0  # This is one hand, but its index is 0
@@ -64,12 +64,10 @@ def test_counting_function_hand_upwards_all_fingers_up_thumb_right(
     decimal = 0
     binary = 0
 
-    finger_list = finger_position_relative_to_wrist(hands_up_thumb_right,
-                                                    THUMB_COORD,
-                                                    thumb=True)
-    finger_list += finger_position_relative_to_wrist(hands_up_thumb_right,
-                                                     FINGER_COORD,
-                                                     thumb=False)
+    finger_list = finger_position_relative_to_focal_point(
+        hands_up_thumb_right, THUMB_COORD, thumb=True)
+    finger_list += finger_position_relative_to_focal_point(
+        hands_up_thumb_right, FINGER_COORD, thumb=False)
     finger_list = determine_thumb_position(hands_up_thumb_right, finger_list)
     decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
                                      decimal, binary)
@@ -89,12 +87,10 @@ def test_counting_function_hand_upwards_all_fingers_up_thumb_left(
     decimal = 0
     binary = 0
 
-    finger_list = finger_position_relative_to_wrist(hands_up_thumb_left,
-                                                    THUMB_COORD,
-                                                    thumb=True)
-    finger_list += finger_position_relative_to_wrist(hands_up_thumb_left,
-                                                     FINGER_COORD,
-                                                     thumb=False)
+    finger_list = finger_position_relative_to_focal_point(
+        hands_up_thumb_left, THUMB_COORD, thumb=True)
+    finger_list += finger_position_relative_to_focal_point(
+        hands_up_thumb_left, FINGER_COORD, thumb=False)
     finger_list = determine_thumb_position(hands_up_thumb_left, finger_list)
     decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
                                      decimal, binary)
@@ -115,12 +111,10 @@ def test_counting_function_hand_downwards_all_fingers_up_thumb_left(
     decimal = 0
     binary = 0
 
-    finger_list = finger_position_relative_to_wrist(hands_down_thumb_left,
-                                                    THUMB_COORD,
-                                                    thumb=True)
-    finger_list += finger_position_relative_to_wrist(hands_down_thumb_left,
-                                                     FINGER_COORD,
-                                                     thumb=False)
+    finger_list = finger_position_relative_to_focal_point(
+        hands_down_thumb_left, THUMB_COORD, thumb=True)
+    finger_list += finger_position_relative_to_focal_point(
+        hands_down_thumb_left, FINGER_COORD, thumb=False)
     finger_list = determine_thumb_position(hands_down_thumb_left, finger_list)
     decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
                                      decimal, binary)
@@ -141,12 +135,10 @@ def test_counting_function_hand_downwards_all_fingers_up_thumb_right(
     decimal = 0
     binary = 0
 
-    finger_list = finger_position_relative_to_wrist(hands_down_thumb_right,
-                                                    THUMB_COORD,
-                                                    thumb=True)
-    finger_list += finger_position_relative_to_wrist(hands_down_thumb_right,
-                                                     FINGER_COORD,
-                                                     thumb=False)
+    finger_list = finger_position_relative_to_focal_point(
+        hands_down_thumb_right, THUMB_COORD, thumb=True)
+    finger_list += finger_position_relative_to_focal_point(
+        hands_down_thumb_right, FINGER_COORD, thumb=False)
     finger_list = determine_thumb_position(hands_down_thumb_right, finger_list)
     decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
                                      decimal, binary)
@@ -181,12 +173,10 @@ def test_counting_function_hand_upwards_thumb_right(
     hand_list[test_input[0]] = hand_list[test_input[1]]
     hand_list[test_input[1]] = temp_list
 
-    finger_list = finger_position_relative_to_wrist(hand_list,
-                                                    THUMB_COORD,
-                                                    thumb=True)
-    finger_list += finger_position_relative_to_wrist(hand_list,
-                                                     FINGER_COORD,
-                                                     thumb=False)
+    finger_list = finger_position_relative_to_focal_point(
+        hand_list, THUMB_COORD, thumb=True)
+    finger_list += finger_position_relative_to_focal_point(
+        hand_list, FINGER_COORD, thumb=False)
     finger_list = determine_thumb_position(hand_list, finger_list)
     decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
                                      decimal, binary)
@@ -221,12 +211,10 @@ def test_counting_function_hand_upwards_thumb_left(
     hand_list[test_input[0]] = hand_list[test_input[1]]
     hand_list[test_input[1]] = temp_list
 
-    finger_list = finger_position_relative_to_wrist(hand_list,
-                                                    THUMB_COORD,
-                                                    thumb=True)
-    finger_list += finger_position_relative_to_wrist(hand_list,
-                                                     FINGER_COORD,
-                                                     thumb=False)
+    finger_list = finger_position_relative_to_focal_point(
+        hand_list, THUMB_COORD, thumb=True)
+    finger_list += finger_position_relative_to_focal_point(
+        hand_list, FINGER_COORD, thumb=False)
     finger_list = determine_thumb_position(hand_list, finger_list)
     decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
                                      decimal, binary)
@@ -261,12 +249,10 @@ def test_counting_function_hand_downwards_thumb_left(
     hand_list[test_input[0]] = hand_list[test_input[1]]
     hand_list[test_input[1]] = temp_list
 
-    finger_list = finger_position_relative_to_wrist(hand_list,
-                                                    THUMB_COORD,
-                                                    thumb=True)
-    finger_list += finger_position_relative_to_wrist(hand_list,
-                                                     FINGER_COORD,
-                                                     thumb=False)
+    finger_list = finger_position_relative_to_focal_point(
+        hand_list, THUMB_COORD, thumb=True)
+    finger_list += finger_position_relative_to_focal_point(
+        hand_list, FINGER_COORD, thumb=False)
     finger_list = determine_thumb_position(hand_list, finger_list)
     decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
                                      decimal, binary)
@@ -301,12 +287,10 @@ def test_counting_function_hand_downwards_thumb_right(
     hand_list[test_input[0]] = hand_list[test_input[1]]
     hand_list[test_input[1]] = temp_list
 
-    finger_list = finger_position_relative_to_wrist(hand_list,
-                                                    THUMB_COORD,
-                                                    thumb=True)
-    finger_list += finger_position_relative_to_wrist(hand_list,
-                                                     FINGER_COORD,
-                                                     thumb=False)
+    finger_list = finger_position_relative_to_focal_point(
+        hand_list, THUMB_COORD, thumb=True)
+    finger_list += finger_position_relative_to_focal_point(
+        hand_list, FINGER_COORD, thumb=False)
     finger_list = determine_thumb_position(hand_list, finger_list)
     decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
                                      decimal, binary)
