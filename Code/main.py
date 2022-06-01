@@ -78,7 +78,7 @@ def determine_thumb_position(hand_list, finger_list):
     """
     Determines the order of the list. When given the list the thumb is the
     first item on the list. But, if the thumb is on the right side of the
-    hand (from user facing the screen), then the list needs to be reversed. 
+    hand (from user facing the screen), then the list needs to be reversed.
 
     Parameter:
         hand_list (list): tuple containing the joints coords
@@ -207,7 +207,8 @@ def main():
                 hand_lms = multi_land_marks[hand_num]
                 mp_draw.draw_landmarks(image, hand_lms,
                                        mp_hands.HAND_CONNECTIONS)
-                hand_list = convert_coords_to_pixels(hand_lms, hand_list, image)
+                hand_list = convert_coords_to_pixels(hand_lms, hand_list,
+                                                     image)
                 draw_points(hand_list, image, colour)
                 finger_list = finger_position_relative_to_focal_point(
                     hand_list, THUMB_COORD, thumb=True)
