@@ -176,7 +176,7 @@ def main():
     success, image = cap.read()
 
     mp_hands = mp.solutions.hands  # Used to detect hands in the input image
-    hands = mp_hands.Hands(max_num_hands=6)  # Used to process the detected
+    hands = mp_hands.Hands(max_num_hands=2)  # Used to process the detected
     # hands
     mp_draw = mp.solutions.drawing_utils  # Used to draw the hands
     hand_dict = {}
