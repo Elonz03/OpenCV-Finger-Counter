@@ -25,33 +25,80 @@ Hand landmark numbers:
 19. PINKY DIP
 20. PINKY TIP
 """
+from random import randint
+import sys
 import cv2
 import mediapipe as mp
 
-from random import randint
 
 FINGER_COORD = [(8, 6), (12, 10), (16, 14), (20, 18)]
 THUMB_COORD = [(4, 5), ]  # Thumb tip and index MCP
+MP_DRAW = mp.solutions.drawing_utils  # Used to draw the hands
+MP_HANDS = mp.solutions.hands  # Used to detect hands in the input image
+HANDS = MP_HANDS.Hands(max_num_hands=2)  # Used to process the detected hands
+hand_dict = {}
+
+
+def start_camera():
+    """
+    This checks if there is a camera that can be used locally. If not it closes
+    the program.
+
+    return (tuple): contains - bool, array and address to camera
+    """
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        print("Cannot open camera")
+        sys.exit()
+    success, image = cap.read()
+    return success, image, cap
 
 
 def convert_coords_to_pixels(hand_lms, hand_list, image):
-    # Convert each of the co-ordinates for every landmark to pixel
-    # positions
-    for idx, lm in enumerate(hand_lms.landmark):
-        h, w, c = image.shape
-        cx, cy = int(lm.x * w), int(lm.y * h)
-        hand_list.append((cx, cy))
+    """
+    Convert each of the co-ordinates for every landmark to pixel
+    positions
+
+    Parameter:
+        hand_lms (list): list containing x, y, z  of finger points
+        hand_list (list): list containing the finger points in pixels
+        image (array): array containing content about the image
+
+    return (list): list containing the finger points in pixels
+    """
+    for _idx, landmark in enumerate(hand_lms.landmark):
+        height, width, _coordinate = image.shape
+        c_x, c_y = int(landmark.x * width), int(landmark.y * height)
+        hand_list.append((c_x, c_y))
     return hand_list
 
 
 def draw_points(hand_list, image, colour):
-    # Draw the circles for the landmarks
+    """
+    This draws the circles above each of the hand landmarks
+
+    parameter:
+        hand_list (list): list containing the finger points in pixels
+        image (array): array containing content about the image
+        colour (tuple): contains three ints from 0-255
+
+    return:
+    """
     for point in hand_list:
         cv2.circle(image, point, 10, colour, cv2.FILLED)
 
 
 def finger_position_relative_to_focal_point(hand_list, finger_coord,
                                             thumb=False):
+    """
+
+    hand_list (list): list containing the finger points in pixels
+    finger_coord (list): contains tuple containing the indices that are
+                         compared for the fingers/thumb.
+    thumb (bool): used to indicate if the thumb coord is passed in
+
+    return (list): contains the x/y value relative to the focal point
+    """
     if thumb:
         focal_index = 17  # pinky MCP
     else:
@@ -94,6 +141,28 @@ def determine_thumb_position(hand_list, finger_list):
     return finger_list
 
 
+def collect_finger_points(hand_list):
+    """
+    This creates the finger_list based on the data from hand_list and the
+    FINGER_COORD and THUMB_COORD. It creates the list so the thumb is in the
+    0th index and then goes from index to pinky. Finally, it checks the
+    position of the thumb and will reverse the list if the thumb is on the
+    right side.
+
+    Parameter:
+        hand_list (list): tuple containing the joints coords
+
+    return (list): contains list containing the x or y values relative to the
+                   focal point
+    """
+    finger_list = finger_position_relative_to_focal_point(
+        hand_list, THUMB_COORD, thumb=True)
+    finger_list += finger_position_relative_to_focal_point(
+        hand_list, FINGER_COORD, thumb=False)
+
+    return determine_thumb_position(hand_list, finger_list)
+
+
 def finger_counter(finger_list, hand_num, tot_num_of_hands, decimal, binary):
     """
     Returns the number of fingers/thumbs that are up.
@@ -130,6 +199,7 @@ def keyboard_input(count_decimal, success):
     Parameter:
         count_decimal (bool): Determines if counting in decimal or binary
         success (bool): Determines if program continues
+
     return (tuple): boolean values
     """
     pressed_key = cv2.waitKey(1)
@@ -153,6 +223,7 @@ def display_text(image, decimal, binary, count_decimal):
         decimal (int): decimal representation of fingers that are up
         binary (int): binary number calculated
         count_decimal (bool): determines if it is counting in decimal
+
     return: None
     """
     if count_decimal:
@@ -168,18 +239,16 @@ def display_text(image, decimal, binary, count_decimal):
 
 
 def main():
-    # Use the web-camera on your device
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print("Cannot open camera")
-        exit()
-    success, image = cap.read()
+    """
+    This is the main function of the program. It starts the camera and checks
+    there is a valid camera that can be used. It then processes the image to
+    find the landmarks. The landmarks and then used for the logic to see if
+    the fingers are up or down.
 
-    mp_hands = mp.solutions.hands  # Used to detect hands in the input image
-    hands = mp_hands.Hands(max_num_hands=2)  # Used to process the detected
-    # hands
-    mp_draw = mp.solutions.drawing_utils  # Used to draw the hands
-    hand_dict = {}
+    return:
+    """
+    success, image, cap = start_camera()
+
     count_decimal = True
 
     while success:
@@ -188,7 +257,7 @@ def main():
         success, image = cap.read()
         image = cv2.flip(image, flipCode=1)
         rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        results = hands.process(rgb_image)
+        results = HANDS.process(rgb_image)
         multi_land_marks = results.multi_hand_landmarks
         decimal = 0
         binary = 0
@@ -205,17 +274,12 @@ def main():
                                            randint(0, 255))
                 colour = hand_dict[hand_num]
                 hand_lms = multi_land_marks[hand_num]
-                mp_draw.draw_landmarks(image, hand_lms,
-                                       mp_hands.HAND_CONNECTIONS)
+                MP_DRAW.draw_landmarks(image, hand_lms,
+                                       MP_HANDS.HAND_CONNECTIONS)
                 hand_list = convert_coords_to_pixels(hand_lms, hand_list,
                                                      image)
                 draw_points(hand_list, image, colour)
-                finger_list = finger_position_relative_to_focal_point(
-                    hand_list, THUMB_COORD, thumb=True)
-                finger_list += finger_position_relative_to_focal_point(
-                    hand_list, FINGER_COORD, thumb=False)
-
-                finger_list = determine_thumb_position(hand_list, finger_list)
+                finger_list = collect_finger_points(hand_list)
                 decimal, binary = finger_counter(finger_list, hand_num,
                                                  tot_num_of_hands, decimal,
                                                  binary)
