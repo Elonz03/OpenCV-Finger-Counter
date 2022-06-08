@@ -1,5 +1,3 @@
-# This is a basic workflow to help you get started with Actions
-
 name: CI
 
 # Controls when the workflow will run
@@ -39,13 +37,39 @@ jobs:
 
       - name: unit_tests
         run: cd Code ; python -m pytest unit_test
-  
-  PEP8:
+
+  pep8:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
-      
+
       - name: Flake8
-        run: pip install flake8; flake8 Code/main.py 
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8; flake8 Code/main.py
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+
+      - uses: syphar/restore-virtualenv@v1.2
+        id: venv
+        with:
+          requirement_files: Code/requirements.txt
+
+      - uses: syphar/restore-pip-download-cache@v1
+        if: steps.venv.outputs.cache-hit != 'true'
+
+      - run: pip install -r Code/requirements.txt
+        if: steps.venv.outputs.chache-hit != 'true'
+
+      - name: Pylint
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint;
+          pylint Code/main.py
