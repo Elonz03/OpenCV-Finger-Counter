@@ -54,23 +54,26 @@ def start_camera():
     return success, image, cap
 
 
-def convert_coords_to_pixels(hand_lms, hand_list, image):
+def convert_coords_to_pixels(hand_lms, image):
     """
     Convert each of the co-ordinates for every landmark to pixel
     positions
 
     Parameter:
         hand_lms (list): list containing x, y, z  of finger points
-        hand_list (list): list containing the finger points in pixels
         image (array): array containing content about the image
 
     return (list): list containing the finger points in pixels
     """
-    for _idx, landmark in enumerate(hand_lms.landmark):
-        height, width, _coordinate = image.shape
-        c_x, c_y = int(landmark.x * width), int(landmark.y * height)
-        hand_list.append((c_x, c_y))
-    return hand_list
+    hands_list = []
+    for i in range(len(hand_lms)):
+        hand_container = []
+        for _idx, landmark in enumerate(hand_lms[i].landmark):
+            height, width, _coordinate = image.shape
+            c_x, c_y = int(landmark.x * width), int(landmark.y * height)
+            hand_container.append((c_x, c_y))
+        hands_list.append(hand_container)
+    return hands_list
 
 
 def draw_points(hand_list, image, colour):
@@ -84,8 +87,9 @@ def draw_points(hand_list, image, colour):
 
     return:
     """
-    for point in hand_list:
-        cv2.circle(image, point, 10, colour, cv2.FILLED)
+    for hand in hand_list:
+        for point in hand:
+            cv2.circle(image, point, 10, colour, cv2.FILLED)
 
 
 def finger_position_relative_to_focal_point(hand_list, finger_coord,
@@ -155,12 +159,15 @@ def collect_finger_points(hand_list):
     return (list): contains list containing the x or y values relative to the
                    focal point
     """
-    finger_list = finger_position_relative_to_focal_point(
-        hand_list, THUMB_COORD, thumb=True)
-    finger_list += finger_position_relative_to_focal_point(
-        hand_list, FINGER_COORD, thumb=False)
+    returned_finger_list = []
+    for hand in hand_list:
+        finger_list = finger_position_relative_to_focal_point(
+            hand, THUMB_COORD, thumb=True)
+        finger_list += finger_position_relative_to_focal_point(
+            hand, FINGER_COORD, thumb=False)
+        returned_finger_list.append(determine_thumb_position(hand, finger_list))
 
-    return determine_thumb_position(hand_list, finger_list)
+    return returned_finger_list
 
 
 def finger_counter(finger_list, hand_num, tot_num_of_hands, decimal, binary):
@@ -267,7 +274,6 @@ def main():
         if multi_land_marks:
             tot_num_of_hands = len(multi_land_marks)
             for hand_num in range(tot_num_of_hands):
-                hand_list = []
 
                 if hand_num not in hand_dict:
                     hand_dict[hand_num] = (randint(0, 255), randint(0, 255),
@@ -276,13 +282,12 @@ def main():
                 hand_lms = multi_land_marks[hand_num]
                 MP_DRAW.draw_landmarks(image, hand_lms,
                                        MP_HANDS.HAND_CONNECTIONS)
-                hand_list = convert_coords_to_pixels(hand_lms, hand_list,
-                                                     image)
-                draw_points(hand_list, image, colour)
-                finger_list = collect_finger_points(hand_list)
-                decimal, binary = finger_counter(finger_list, hand_num,
-                                                 tot_num_of_hands, decimal,
-                                                 binary)
+
+            hand_list = convert_coords_to_pixels(multi_land_marks, image)
+            draw_points(hand_list, image, colour)
+            finger_list = collect_finger_points(hand_list)
+            decimal, binary = finger_counter(finger_list, hand_num,
+                                             tot_num_of_hands, decimal, binary)
         count_decimal, success = keyboard_input(count_decimal, success)
         display_text(image, decimal, binary, count_decimal)
 
