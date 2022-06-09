@@ -54,38 +54,67 @@ def start_camera():
     return success, image, cap
 
 
-def convert_coords_to_pixels(hand_lms, hand_list, image):
+def convert_coords_to_pixels(hand_lms, image):
     """
     Convert each of the co-ordinates for every landmark to pixel
     positions
 
     Parameter:
         hand_lms (list): list containing x, y, z  of finger points
-        hand_list (list): list containing the finger points in pixels
         image (array): array containing content about the image
 
     return (list): list containing the finger points in pixels
     """
-    for _idx, landmark in enumerate(hand_lms.landmark):
-        height, width, _coordinate = image.shape
-        c_x, c_y = int(landmark.x * width), int(landmark.y * height)
-        hand_list.append((c_x, c_y))
-    return hand_list
+    hands_list = []
+    for _i, hand_landmarks in enumerate(hand_lms):
+        hand_container = []
+        for _idx, landmark in enumerate(hand_landmarks.landmark):
+            height, width, _coordinate = image.shape
+            c_x, c_y = int(landmark.x * width), int(landmark.y * height)
+            hand_container.append((c_x, c_y))
+        hands_list.append(hand_container)
+    return order_hands(hands_list)
 
 
-def draw_points(hand_list, image, colour):
+def wrist_position(hand):
+    """
+
+    Parameter:
+        hand (list): contains tuple that has each joints co-ordinates
+
+    return (int): int value relating to the wrist x-position
+    """
+    return hand[0][0]
+
+
+def order_hands(hand_list):
+    """
+    This orders the hand in the order they appear from left to right. This is
+    done by comparing the x-values of each hand's wrist.
+
+    Parameter:
+        hand_list (list): list containing the finger points in pixels
+
+    return (list): hand_list ordered with hands from left to right
+    """
+    return sorted(hand_list, key=wrist_position, reverse=False)
+
+
+def draw_points(hand_list, image, hand_colour):
     """
     This draws the circles above each of the hand landmarks
 
     parameter:
         hand_list (list): list containing the finger points in pixels
         image (array): array containing content about the image
-        colour (tuple): contains three ints from 0-255
+        hand_colour (dict): contains tuples that have three ints from 0-255
 
     return:
     """
-    for point in hand_list:
-        cv2.circle(image, point, 10, colour, cv2.FILLED)
+    for index, hand in enumerate(hand_list):
+        colour = hand_colour[index]
+        for point in hand:
+            cv2.circle(image, point, 10, colour, cv2.FILLED)
 
 
 def finger_position_relative_to_focal_point(hand_list, finger_coord,
@@ -155,15 +184,18 @@ def collect_finger_points(hand_list):
     return (list): contains list containing the x or y values relative to the
                    focal point
     """
-    finger_list = finger_position_relative_to_focal_point(
-        hand_list, THUMB_COORD, thumb=True)
-    finger_list += finger_position_relative_to_focal_point(
-        hand_list, FINGER_COORD, thumb=False)
+    returned_finger_list = []
+    for hand in hand_list:
+        finger_list = finger_position_relative_to_focal_point(
+            hand, THUMB_COORD, thumb=True)
+        finger_list += finger_position_relative_to_focal_point(
+            hand, FINGER_COORD, thumb=False)
+        returned_finger_list.append(determine_thumb_position(hand,
+                                                             finger_list))
+    return returned_finger_list
 
-    return determine_thumb_position(hand_list, finger_list)
 
-
-def finger_counter(finger_list, hand_num, tot_num_of_hands, decimal, binary):
+def finger_counter(finger_list):
     """
     Returns the number of fingers/thumbs that are up.
     Additionally, it calculates the binary representation if each finger is a
@@ -173,22 +205,24 @@ def finger_counter(finger_list, hand_num, tot_num_of_hands, decimal, binary):
 
     Parameter:
         finger_list (list): list containing the x or y points of the joints
-        hand_num (int): number of the hand that is being counted
-        tot_num_of_hands (int): total number of hands on screen
-        decimal (int): current total number of fingers counted
-        binary (int): current total of binary number represented
 
     return (tuple): Number of fingers up, binary count
     """
-    binary_exponent = ((tot_num_of_hands - hand_num) * 5) - 1
-    for finger in finger_list:
-        finger_tip = finger[0]
-        finger_joint = finger[1]
+    binary = 0
+    decimal = 0
+    hand_tot = len(finger_list)
+    for hand_index in range(hand_tot):
+        hand = finger_list[hand_index]
+        finger_tot = len(hand)  # In most circumstance it is 5
+        exponent = ((hand_tot - hand_index) * finger_tot) - 1
+        for finger_index in range(finger_tot):
+            finger = hand[finger_index]
+            finger_tip = finger[0]
+            finger_joint = finger[1]
+            if finger_tip > finger_joint:
 
-        if finger_tip > finger_joint:
-            binary += 2**binary_exponent
-            decimal += 1
-        binary_exponent -= 1
+                binary += 2**(exponent - finger_index)
+                decimal += 1
     return decimal, binary
 
 
@@ -267,22 +301,18 @@ def main():
         if multi_land_marks:
             tot_num_of_hands = len(multi_land_marks)
             for hand_num in range(tot_num_of_hands):
-                hand_list = []
 
                 if hand_num not in hand_dict:
                     hand_dict[hand_num] = (randint(0, 255), randint(0, 255),
                                            randint(0, 255))
-                colour = hand_dict[hand_num]
                 hand_lms = multi_land_marks[hand_num]
                 MP_DRAW.draw_landmarks(image, hand_lms,
                                        MP_HANDS.HAND_CONNECTIONS)
-                hand_list = convert_coords_to_pixels(hand_lms, hand_list,
-                                                     image)
-                draw_points(hand_list, image, colour)
-                finger_list = collect_finger_points(hand_list)
-                decimal, binary = finger_counter(finger_list, hand_num,
-                                                 tot_num_of_hands, decimal,
-                                                 binary)
+
+            hand_list = convert_coords_to_pixels(multi_land_marks, image)
+            draw_points(hand_list, image, hand_dict)
+            finger_list = collect_finger_points(hand_list)
+            decimal, binary = finger_counter(finger_list)
         count_decimal, success = keyboard_input(count_decimal, success)
         display_text(image, decimal, binary, count_decimal)
 
