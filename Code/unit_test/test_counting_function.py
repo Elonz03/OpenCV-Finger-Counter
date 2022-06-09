@@ -61,16 +61,14 @@ def test_counting_function_hand_upwards_all_fingers_up_thumb_right(
 
     return: None
     """
-    decimal = 0
-    binary = 0
-
+    returned_finger_list = []
     finger_list = finger_position_relative_to_focal_point(
         hands_up_thumb_right, THUMB_COORD, thumb=True)
     finger_list += finger_position_relative_to_focal_point(
         hands_up_thumb_right, FINGER_COORD, thumb=False)
-    finger_list = determine_thumb_position(hands_up_thumb_right, finger_list)
-    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
-                                     decimal, binary)
+    returned_finger_list.append(determine_thumb_position(
+        hands_up_thumb_right, finger_list))
+    decimal, binary = finger_counter(returned_finger_list)
     assert decimal == 5
     assert binary == 31
 
@@ -84,16 +82,14 @@ def test_counting_function_hand_upwards_all_fingers_up_thumb_left(
 
     return: None
     """
-    decimal = 0
-    binary = 0
-
+    returned_finger_list = []
     finger_list = finger_position_relative_to_focal_point(
         hands_up_thumb_left, THUMB_COORD, thumb=True)
     finger_list += finger_position_relative_to_focal_point(
         hands_up_thumb_left, FINGER_COORD, thumb=False)
-    finger_list = determine_thumb_position(hands_up_thumb_left, finger_list)
-    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
-                                     decimal, binary)
+    returned_finger_list.append(determine_thumb_position(
+        hands_up_thumb_left, finger_list))
+    decimal, binary = finger_counter(returned_finger_list)
     assert decimal == 5
     assert binary == 31
 
@@ -108,16 +104,14 @@ def test_counting_function_hand_downwards_all_fingers_up_thumb_left(
 
     return: None
     """
-    decimal = 0
-    binary = 0
-
+    returned_finger_list = []
     finger_list = finger_position_relative_to_focal_point(
         hands_down_thumb_left, THUMB_COORD, thumb=True)
     finger_list += finger_position_relative_to_focal_point(
         hands_down_thumb_left, FINGER_COORD, thumb=False)
-    finger_list = determine_thumb_position(hands_down_thumb_left, finger_list)
-    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
-                                     decimal, binary)
+    returned_finger_list.append(determine_thumb_position(
+        hands_down_thumb_left, finger_list))
+    decimal, binary = finger_counter(returned_finger_list)
     assert decimal == 5
     assert binary == 31
 
@@ -132,16 +126,14 @@ def test_counting_function_hand_downwards_all_fingers_up_thumb_right(
 
     return: None
     """
-    decimal = 0
-    binary = 0
-
+    returned_finger_list = []
     finger_list = finger_position_relative_to_focal_point(
         hands_down_thumb_right, THUMB_COORD, thumb=True)
     finger_list += finger_position_relative_to_focal_point(
         hands_down_thumb_right, FINGER_COORD, thumb=False)
-    finger_list = determine_thumb_position(hands_down_thumb_right, finger_list)
-    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
-                                     decimal, binary)
+    returned_finger_list.append(determine_thumb_position(
+        hands_down_thumb_right, finger_list))
+    decimal, binary = finger_counter(returned_finger_list)
     assert decimal == 5
     assert binary == 31
 
@@ -165,8 +157,7 @@ def test_counting_function_hand_upwards_thumb_right(
 
     return: None
     """
-    decimal = 0
-    binary = 0
+    returned_finger_list = []
     hand_list = hands_up_thumb_right
     temp_list = hand_list[test_input[0]]
 
@@ -177,9 +168,9 @@ def test_counting_function_hand_upwards_thumb_right(
         hand_list, THUMB_COORD, thumb=True)
     finger_list += finger_position_relative_to_focal_point(
         hand_list, FINGER_COORD, thumb=False)
-    finger_list = determine_thumb_position(hand_list, finger_list)
-    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
-                                     decimal, binary)
+    returned_finger_list.append(determine_thumb_position(
+        hands_up_thumb_right, finger_list))
+    decimal, binary = finger_counter(returned_finger_list)
     assert decimal == expected[0]
     assert binary == expected[1]
 
@@ -203,8 +194,7 @@ def test_counting_function_hand_upwards_thumb_left(
 
     return: None
     """
-    decimal = 0
-    binary = 0
+    returned_finger_list = []
     hand_list = hands_up_thumb_left
     temp_list = hand_list[test_input[0]]
 
@@ -215,9 +205,9 @@ def test_counting_function_hand_upwards_thumb_left(
         hand_list, THUMB_COORD, thumb=True)
     finger_list += finger_position_relative_to_focal_point(
         hand_list, FINGER_COORD, thumb=False)
-    finger_list = determine_thumb_position(hand_list, finger_list)
-    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
-                                     decimal, binary)
+    returned_finger_list.append(determine_thumb_position(
+        hands_up_thumb_left, finger_list))
+    decimal, binary = finger_counter(returned_finger_list)
     assert decimal == expected[0]
     assert binary == expected[1]
 
@@ -241,8 +231,7 @@ def test_counting_function_hand_downwards_thumb_left(
 
     return: None
     """
-    decimal = 0
-    binary = 0
+    returned_finger_list = []
     hand_list = hands_down_thumb_left
     temp_list = hand_list[test_input[0]]
 
@@ -253,9 +242,9 @@ def test_counting_function_hand_downwards_thumb_left(
         hand_list, THUMB_COORD, thumb=True)
     finger_list += finger_position_relative_to_focal_point(
         hand_list, FINGER_COORD, thumb=False)
-    finger_list = determine_thumb_position(hand_list, finger_list)
-    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
-                                     decimal, binary)
+    returned_finger_list.append(determine_thumb_position(
+        hands_down_thumb_left, finger_list))
+    decimal, binary = finger_counter(returned_finger_list)
     assert decimal == expected[0]
     assert binary == expected[1]
 
@@ -279,8 +268,7 @@ def test_counting_function_hand_downwards_thumb_right(
 
     return: None
     """
-    decimal = 0
-    binary = 0
+    returned_finger_list = []
     hand_list = hands_down_thumb_right
     temp_list = hand_list[test_input[0]]
 
@@ -291,8 +279,8 @@ def test_counting_function_hand_downwards_thumb_right(
         hand_list, THUMB_COORD, thumb=True)
     finger_list += finger_position_relative_to_focal_point(
         hand_list, FINGER_COORD, thumb=False)
-    finger_list = determine_thumb_position(hand_list, finger_list)
-    decimal, binary = finger_counter(finger_list, HAND_NUM, TOT_NUM_HANDS,
-                                     decimal, binary)
+    returned_finger_list.append(determine_thumb_position(
+        hands_down_thumb_right, finger_list))
+    decimal, binary = finger_counter(returned_finger_list)
     assert decimal == expected[0]
     assert binary == expected[1]

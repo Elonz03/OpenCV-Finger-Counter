@@ -192,7 +192,6 @@ def collect_finger_points(hand_list):
             hand, FINGER_COORD, thumb=False)
         returned_finger_list.append(determine_thumb_position(hand,
                                                              finger_list))
-
     return returned_finger_list
 
 
