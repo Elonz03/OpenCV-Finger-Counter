@@ -66,14 +66,14 @@ def convert_coords_to_pixels(hand_lms, image):
     return (list): list containing the finger points in pixels
     """
     hands_list = []
-    for i in range(len(hand_lms)):
+    for _i, hand_landmarks in enumerate(hand_lms):
         hand_container = []
-        for _idx, landmark in enumerate(hand_lms[i].landmark):
+        for _idx, landmark in enumerate(hand_landmarks.landmark):
             height, width, _coordinate = image.shape
             c_x, c_y = int(landmark.x * width), int(landmark.y * height)
             hand_container.append((c_x, c_y))
         hands_list.append(hand_container)
-    return hands_list
+    return order_hands(hands_list)
 
 
 def wrist_position(hand):
@@ -111,9 +111,8 @@ def draw_points(hand_list, image, hand_colour):
 
     return:
     """
-    for i in range(len(hand_list)):
-        hand = hand_list[i]
-        colour = hand_colour[i]
+    for index, hand in enumerate(hand_list):
+        colour = hand_colour[index]
         for point in hand:
             cv2.circle(image, point, 10, colour, cv2.FILLED)
 
@@ -191,7 +190,8 @@ def collect_finger_points(hand_list):
             hand, THUMB_COORD, thumb=True)
         finger_list += finger_position_relative_to_focal_point(
             hand, FINGER_COORD, thumb=False)
-        returned_finger_list.append(determine_thumb_position(hand, finger_list))
+        returned_finger_list.append(determine_thumb_position(hand,
+                                                             finger_list))
 
     return returned_finger_list
 
@@ -311,7 +311,6 @@ def main():
                                        MP_HANDS.HAND_CONNECTIONS)
 
             hand_list = convert_coords_to_pixels(multi_land_marks, image)
-            hand_list = order_hands(hand_list)
             draw_points(hand_list, image, hand_dict)
             finger_list = collect_finger_points(hand_list)
             decimal, binary = finger_counter(finger_list)
