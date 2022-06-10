@@ -62,13 +62,14 @@ def test_counting_function_hand_upwards_all_fingers_up_thumb_right(
     return: None
     """
     returned_finger_list = []
+    hand_sideways = [False]
     finger_list = finger_position_relative_to_focal_point(
         hands_up_thumb_right, THUMB_COORD, thumb=True)
     finger_list += finger_position_relative_to_focal_point(
         hands_up_thumb_right, FINGER_COORD, thumb=False)
     returned_finger_list.append(determine_thumb_position(
         hands_up_thumb_right, finger_list))
-    decimal, binary = finger_counter(returned_finger_list)
+    decimal, binary = finger_counter(returned_finger_list, hand_sideways)
     assert decimal == 5
     assert binary == 31
 
@@ -83,13 +84,14 @@ def test_counting_function_hand_upwards_all_fingers_up_thumb_left(
     return: None
     """
     returned_finger_list = []
+    hand_sideways = [False]
     finger_list = finger_position_relative_to_focal_point(
         hands_up_thumb_left, THUMB_COORD, thumb=True)
     finger_list += finger_position_relative_to_focal_point(
         hands_up_thumb_left, FINGER_COORD, thumb=False)
     returned_finger_list.append(determine_thumb_position(
         hands_up_thumb_left, finger_list))
-    decimal, binary = finger_counter(returned_finger_list)
+    decimal, binary = finger_counter(returned_finger_list, hand_sideways)
     assert decimal == 5
     assert binary == 31
 
@@ -105,15 +107,16 @@ def test_counting_function_hand_downwards_all_fingers_up_thumb_left(
     return: None
     """
     returned_finger_list = []
+    hand_sideways = [True]
     finger_list = finger_position_relative_to_focal_point(
         hands_down_thumb_left, THUMB_COORD, thumb=True)
     finger_list += finger_position_relative_to_focal_point(
         hands_down_thumb_left, FINGER_COORD, thumb=False)
     returned_finger_list.append(determine_thumb_position(
         hands_down_thumb_left, finger_list))
-    decimal, binary = finger_counter(returned_finger_list)
+    decimal, binary = finger_counter(returned_finger_list, hand_sideways)
     assert decimal == 5
-    assert binary == 31
+    assert binary == 0
 
 
 def test_counting_function_hand_downwards_all_fingers_up_thumb_right(
@@ -127,15 +130,16 @@ def test_counting_function_hand_downwards_all_fingers_up_thumb_right(
     return: None
     """
     returned_finger_list = []
+    hand_sideways = [True]
     finger_list = finger_position_relative_to_focal_point(
         hands_down_thumb_right, THUMB_COORD, thumb=True)
     finger_list += finger_position_relative_to_focal_point(
         hands_down_thumb_right, FINGER_COORD, thumb=False)
     returned_finger_list.append(determine_thumb_position(
         hands_down_thumb_right, finger_list))
-    decimal, binary = finger_counter(returned_finger_list)
+    decimal, binary = finger_counter(returned_finger_list, hand_sideways)
     assert decimal == 5
-    assert binary == 31
+    assert binary == 0
 
 
 @pytest.mark.parametrize("test_input,expected",
@@ -158,6 +162,7 @@ def test_counting_function_hand_upwards_thumb_right(
     return: None
     """
     returned_finger_list = []
+    hand_sideways = [False]
     hand_list = hands_up_thumb_right
     temp_list = hand_list[test_input[0]]
 
@@ -170,7 +175,7 @@ def test_counting_function_hand_upwards_thumb_right(
         hand_list, FINGER_COORD, thumb=False)
     returned_finger_list.append(determine_thumb_position(
         hands_up_thumb_right, finger_list))
-    decimal, binary = finger_counter(returned_finger_list)
+    decimal, binary = finger_counter(returned_finger_list, hand_sideways)
     assert decimal == expected[0]
     assert binary == expected[1]
 
@@ -195,6 +200,7 @@ def test_counting_function_hand_upwards_thumb_left(
     return: None
     """
     returned_finger_list = []
+    hand_sideways = [False]
     hand_list = hands_up_thumb_left
     temp_list = hand_list[test_input[0]]
 
@@ -207,18 +213,18 @@ def test_counting_function_hand_upwards_thumb_left(
         hand_list, FINGER_COORD, thumb=False)
     returned_finger_list.append(determine_thumb_position(
         hands_up_thumb_left, finger_list))
-    decimal, binary = finger_counter(returned_finger_list)
+    decimal, binary = finger_counter(returned_finger_list, hand_sideways)
     assert decimal == expected[0]
     assert binary == expected[1]
 
 
 @pytest.mark.parametrize("test_input,expected",
                          [
-                             (THUMB_COORD[0], [4, 15]),  # thumb down
-                             (FINGER_COORD[0], [4, 23]),  # index down
-                             (FINGER_COORD[1], [4, 27]),  # middle down
-                             (FINGER_COORD[2], [4, 29]),  # ring down
-                             (FINGER_COORD[3], [4, 30])  # pinky down
+                             (THUMB_COORD[0], [4, 0]),  # thumb down
+                             (FINGER_COORD[0], [4, 0]),  # index down
+                             (FINGER_COORD[1], [4, 0]),  # middle down
+                             (FINGER_COORD[2], [4, 0]),  # ring down
+                             (FINGER_COORD[3], [4, 0])  # pinky down
                          ]
                          )
 def test_counting_function_hand_downwards_thumb_left(
@@ -232,6 +238,7 @@ def test_counting_function_hand_downwards_thumb_left(
     return: None
     """
     returned_finger_list = []
+    hand_sideways = [True]
     hand_list = hands_down_thumb_left
     temp_list = hand_list[test_input[0]]
 
@@ -244,18 +251,18 @@ def test_counting_function_hand_downwards_thumb_left(
         hand_list, FINGER_COORD, thumb=False)
     returned_finger_list.append(determine_thumb_position(
         hands_down_thumb_left, finger_list))
-    decimal, binary = finger_counter(returned_finger_list)
+    decimal, binary = finger_counter(returned_finger_list, hand_sideways)
     assert decimal == expected[0]
     assert binary == expected[1]
 
 
 @pytest.mark.parametrize("test_input,expected",
                          [
-                             (THUMB_COORD[0], [4, 30]),  # thumb down
-                             (FINGER_COORD[0], [4, 29]),  # index down
-                             (FINGER_COORD[1], [4, 27]),  # middle down
-                             (FINGER_COORD[2], [4, 23]),  # ring down
-                             (FINGER_COORD[3], [4, 15])  # pinky down
+                             (THUMB_COORD[0], [4, 0]),  # thumb down
+                             (FINGER_COORD[0], [4, 0]),  # index down
+                             (FINGER_COORD[1], [4, 0]),  # middle down
+                             (FINGER_COORD[2], [4, 0]),  # ring down
+                             (FINGER_COORD[3], [4, 0])  # pinky down
                          ]
                          )
 def test_counting_function_hand_downwards_thumb_right(
@@ -269,6 +276,7 @@ def test_counting_function_hand_downwards_thumb_right(
     return: None
     """
     returned_finger_list = []
+    hand_sideways = [True]
     hand_list = hands_down_thumb_right
     temp_list = hand_list[test_input[0]]
 
@@ -281,6 +289,6 @@ def test_counting_function_hand_downwards_thumb_right(
         hand_list, FINGER_COORD, thumb=False)
     returned_finger_list.append(determine_thumb_position(
         hands_down_thumb_right, finger_list))
-    decimal, binary = finger_counter(returned_finger_list)
+    decimal, binary = finger_counter(returned_finger_list, hand_sideways)
     assert decimal == expected[0]
     assert binary == expected[1]

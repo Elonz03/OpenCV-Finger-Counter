@@ -31,6 +31,7 @@ import sys
 import cv2
 import mediapipe as mp
 import serial
+import serial.tools.list_ports
 
 PORT_NAME = '/dev/tty.usbserial-141320'
 BAUD_RATE = 9600
@@ -61,15 +62,18 @@ def start_serial():
     """
     This starts the serial communication for the decided port.
 
-    return: None
+    return (Serial): the serial connection to the specified port,
     """
-    serial_com = serial.Serial(port=PORT_NAME, baudrate=BAUD_RATE)
-    if serial_com.isOpen():
-        serial_com.close()
-    serial_com.open()
-    if not serial_com.isOpen():
-        print("Serial is not working")
-        sys.exit()
+    serial_com = None
+    my_ports = [tuple(p) for p in list(serial.tools.list_ports.comports())]
+    for ports in my_ports:
+        if PORT_NAME in ports[0]:
+            serial_com = serial.Serial(port=PORT_NAME, baudrate=BAUD_RATE)
+            if serial_com.isOpen():
+                serial_com.close()
+            serial_com.open()
+    if not serial_com:
+        print("Serial port not found")
     return serial_com
 
 
@@ -214,7 +218,38 @@ def collect_finger_points(hand_list):
     return returned_finger_list
 
 
-def finger_counter(finger_list):
+def is_hand_sideways(hand_list):
+    """
+    The hand is counted as sideways or downwards if the thumb MCP or pinky
+    MCP joint is below the wrist. In terms of pixels if their y-position is
+    greater than the wrist it will be counted as sideways or downwards.
+
+    Parameter:
+        hand_list (list): tuple containing the joints coords
+
+    return (list): booleans relating to if the hand is sideways/downwards
+    """
+    hand_sideways = []
+    for hand in hand_list:
+        wrist_y = hand[0][1]
+        thumb_y = hand[2][1]
+        pinky_y = hand[17][1]
+        if pinky_y > wrist_y or thumb_y > wrist_y:
+            hand_sideways.append(True)
+        else:
+            hand_sideways.append(False)
+    return hand_sideways
+
+
+def find_num_of_sideways_hands(hand_index, hand_sideways, hand_tot):
+    if hand_index != hand_tot - 1:
+        num_of_hands_sideways = hand_sideways[hand_index + 1:].count(True)
+    else:
+        num_of_hands_sideways = hand_index
+    return num_of_hands_sideways
+
+
+def finger_counter(finger_list, hand_sideways):
     """
     Returns the number of fingers/thumbs that are up.
     Additionally, it calculates the binary representation if each finger is a
@@ -224,23 +259,26 @@ def finger_counter(finger_list):
 
     Parameter:
         finger_list (list): list containing the x or y points of the joints
+        hand_sideways (list): booleans relating to if the hand is
+                              sideways/downwards
 
     return (tuple): Number of fingers up, binary count
     """
     binary = 0
     decimal = 0
     hand_tot = len(finger_list)
-    for hand_index in range(hand_tot):
-        hand = finger_list[hand_index]
+    for hand_index, hand in enumerate(finger_list):
+        num_of_hands_sideways = find_num_of_sideways_hands(hand_index,
+                                                           hand_sideways,
+                                                           hand_tot)
         finger_tot = len(hand)  # In most circumstance it is 5
-        exponent = ((hand_tot - hand_index) * finger_tot) - 1
-        for finger_index in range(finger_tot):
-            finger = hand[finger_index]
+        exponent = ((hand_tot - num_of_hands_sideways) * finger_tot) - 1
+        for finger_index, finger in enumerate(hand):
             finger_tip = finger[0]
             finger_joint = finger[1]
             if finger_tip > finger_joint:
-
-                binary += 2**(exponent - finger_index)
+                if not hand_sideways[hand_index]:
+                    binary += 2**(exponent - finger_index)
                 decimal += 1
     return decimal, binary
 
@@ -272,7 +310,7 @@ def calculate_hand_angle(hand):
     return angle, hand_downwards, hand_leftwards
 
 
-def print_hand_number(image, hand_list):
+def print_hand_number(image, hand_list, hand_sideways, count_decimal):
     """
     This prints the number of the hand beneath it. With the largest index
     appearing on the leftmost hand and the smallest index appearing on the
@@ -281,9 +319,13 @@ def print_hand_number(image, hand_list):
     Parameter:
         image (ndarray): array used to represent the image
         hand_list (list): list containing the finger points in pixels
+        hand_sideways (list): booleans relating to if the hand is
+                              sideways/downwards
+        count_decimal (bool): determines if it is counting in decimal
+
     return: None
     """
-    num_of_hands = len(hand_list)
+    hand_tot = len(hand_list)
     for index, hand in enumerate(hand_list):
         angle, hand_downwards, hand_leftwards = calculate_hand_angle(hand)
 
@@ -291,7 +333,14 @@ def print_hand_number(image, hand_list):
         x_multiplier = sin(angle) / 2.5 if hand_leftwards else sin(angle) * 1.2
         wrist_x = hand[0][0]
         wrist_y = hand[0][1]
-        text = str(num_of_hands - index)
+        if count_decimal:
+            text = str(hand_tot - index)
+        else:
+            num_of_hands_sideways = find_num_of_sideways_hands(index,
+                                                               hand_sideways,
+                                                               hand_tot)
+            text = (None if hand_sideways[index] else
+                    str(hand_tot - num_of_hands_sideways))
         text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_COMPLEX, 5, 5)
         text_place = (
             int(wrist_x + (x_multiplier * text_size[1])),
@@ -347,7 +396,8 @@ def display_text(image, decimal, binary, count_decimal, serial_com):
                 cv2.FONT_HERSHEY_PLAIN, 12, (0, 255, 0), 12)
     cv2.putText(image, f"Counting in {count_str}", (150, 200),
                 cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255), 2)
-    serial_com.write(lcd_message.encode('ascii'))
+    if serial_com:
+        serial_com.write(lcd_message.encode('ascii'))
 
 
 def main():
@@ -374,8 +424,6 @@ def main():
         decimal = 0
         binary = 0
 
-        # Nested for loop used to draw each of the landmarks for each hand,
-        # if multiple are present
         if multi_land_marks:
             tot_num_of_hands = len(multi_land_marks)
             for hand_num in range(tot_num_of_hands):
@@ -388,10 +436,12 @@ def main():
                                        MP_HANDS.HAND_CONNECTIONS)
 
             hand_list = convert_coords_to_pixels(multi_land_marks, image)
+            hand_sideways = is_hand_sideways(hand_list)
             draw_points(hand_list, image, hand_dict)
             finger_list = collect_finger_points(hand_list)
-            decimal, binary = finger_counter(finger_list)
-            print_hand_number(image, hand_list)
+            decimal, binary = finger_counter(finger_list, hand_sideways)
+            print_hand_number(image, hand_list, hand_sideways, count_decimal)
+
         count_decimal, success = keyboard_input(count_decimal, success)
         display_text(image, decimal, binary, count_decimal, serial_com)
         cv2.imshow("Counting number of fingers", image)
