@@ -25,6 +25,7 @@ Hand landmark numbers:
 19. PINKY DIP
 20. PINKY TIP
 """
+from math import cos, sin, atan
 from random import randint
 import sys
 import cv2
@@ -226,6 +227,63 @@ def finger_counter(finger_list):
     return decimal, binary
 
 
+def calculate_hand_angle(hand):
+    """
+    This calculates the angle of the hand using the wrist position and the
+    middle finger's MCP joint. By using arc-tan, the angle can be calculated
+    as the x and y values can be treated as the adjacent and opposite values.
+    The angle and then a simple boolean of the orientation of the had is
+    returned.
+
+    Parameter:
+        hand (list): list containing tuples of the x and y pos of each joint
+
+    return (tuple): Angle of the hand, boolean if the hand is downwards,
+                    and if it is pointing towards the left.
+    """
+    x_len = hand[0][0] - hand[9][0]
+    y_len = hand[0][1] - hand[9][1]
+    hand_downwards = False
+    hand_leftwards = False
+    if y_len < 0:
+        hand_downwards = True
+    if x_len > 0:
+        hand_leftwards = True
+
+    angle = 0 if y_len == 0 else atan(x_len/abs(y_len))
+    return angle, hand_downwards, hand_leftwards
+
+
+def print_hand_number(image, hand_list):
+    """
+    This prints the number of the hand beneath it. With the largest index
+    appearing on the leftmost hand and the smallest index appearing on the
+    rightmost hand.
+
+    Parameter:
+        image (ndarray): array used to represent the image
+        hand_list (list): list containing the finger points in pixels
+    return: None
+    """
+    num_of_hands = len(hand_list)
+    for index, hand in enumerate(hand_list):
+        angle, hand_downwards, hand_leftwards = calculate_hand_angle(hand)
+
+        y_multiplier = -1 / 2 * cos(angle) if hand_downwards else cos(angle)
+        x_multiplier = sin(angle) / 2.5 if hand_leftwards else sin(angle) * 1.2
+        print(x_multiplier)
+        wrist_x = hand[0][0]
+        wrist_y = hand[0][1]
+        text = str(num_of_hands - index)
+        text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_COMPLEX, 5, 5)
+        text_place = (
+            int(wrist_x + (x_multiplier * text_size[1])),
+            int(wrist_y + (y_multiplier * text_size[0][0]))
+        )
+        cv2.putText(image, text, text_place,
+                    cv2.FONT_HERSHEY_PLAIN, 5, (255, 255, 255), 5)
+
+
 def keyboard_input(count_decimal, success):
     """
     This handles the input from the keyboard
@@ -313,6 +371,7 @@ def main():
             draw_points(hand_list, image, hand_dict)
             finger_list = collect_finger_points(hand_list)
             decimal, binary = finger_counter(finger_list)
+            print_hand_number(image, hand_list)
         count_decimal, success = keyboard_input(count_decimal, success)
         display_text(image, decimal, binary, count_decimal)
 
