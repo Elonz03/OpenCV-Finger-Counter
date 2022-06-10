@@ -30,8 +30,10 @@ from random import randint
 import sys
 import cv2
 import mediapipe as mp
+import serial
 
-
+PORT_NAME = '/dev/tty.usbserial-141320'
+BAUD_RATE = 9600
 FINGER_COORD = [(8, 6), (12, 10), (16, 14), (20, 18)]
 THUMB_COORD = [(4, 5), ]  # Thumb tip and index MCP
 MP_DRAW = mp.solutions.drawing_utils  # Used to draw the hands
@@ -53,6 +55,22 @@ def start_camera():
         sys.exit()
     success, image = cap.read()
     return success, image, cap
+
+
+def start_serial():
+    """
+    This starts the serial communication for the decided port.
+
+    return: None
+    """
+    serial_com = serial.Serial(port=PORT_NAME, baudrate=BAUD_RATE)
+    if serial_com.isOpen():
+        serial_com.close()
+    serial_com.open()
+    if not serial_com.isOpen():
+        print("Serial is not working")
+        sys.exit()
+    return serial_com
 
 
 def convert_coords_to_pixels(hand_lms, image):
@@ -271,7 +289,6 @@ def print_hand_number(image, hand_list):
 
         y_multiplier = -1 / 2 * cos(angle) if hand_downwards else cos(angle)
         x_multiplier = sin(angle) / 2.5 if hand_leftwards else sin(angle) * 1.2
-        print(x_multiplier)
         wrist_x = hand[0][0]
         wrist_y = hand[0][1]
         text = str(num_of_hands - index)
@@ -306,7 +323,7 @@ def keyboard_input(count_decimal, success):
     return count_decimal, success
 
 
-def display_text(image, decimal, binary, count_decimal):
+def display_text(image, decimal, binary, count_decimal, serial_com):
     """
     This puts the text on the image for when it is shown.
 
@@ -315,6 +332,7 @@ def display_text(image, decimal, binary, count_decimal):
         decimal (int): decimal representation of fingers that are up
         binary (int): binary number calculated
         count_decimal (bool): determines if it is counting in decimal
+        serial_com (Serial): the serial connection to the specified port
 
     return: None
     """
@@ -324,10 +342,12 @@ def display_text(image, decimal, binary, count_decimal):
     else:
         count_str = "Binary"
         display_number = binary
+    lcd_message = f'{count_str}:{display_number}'
     cv2.putText(image, str(display_number), (150, 150),
                 cv2.FONT_HERSHEY_PLAIN, 12, (0, 255, 0), 12)
     cv2.putText(image, f"Counting in {count_str}", (150, 200),
                 cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255), 2)
+    serial_com.write(lcd_message.encode('ascii'))
 
 
 def main():
@@ -340,7 +360,7 @@ def main():
     return:
     """
     success, image, cap = start_camera()
-
+    serial_com = start_serial()
     count_decimal = True
 
     while success:
@@ -373,12 +393,12 @@ def main():
             decimal, binary = finger_counter(finger_list)
             print_hand_number(image, hand_list)
         count_decimal, success = keyboard_input(count_decimal, success)
-        display_text(image, decimal, binary, count_decimal)
-
+        display_text(image, decimal, binary, count_decimal, serial_com)
         cv2.imshow("Counting number of fingers", image)
 
     cap.release()
     cv2.destroyAllWindows()
+    serial_com.close()
 
 
 if __name__ == "__main__":
