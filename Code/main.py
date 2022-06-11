@@ -33,8 +33,8 @@ import mediapipe as mp
 import serial
 import serial.tools.list_ports
 
-PORT_NAME = '/dev/cu.usbserial-141320'
-BAUD_RATE = 9600
+PORT_NAME = '/dev/cu.usbmodem1413101'
+BAUD_RATE = 115200
 FINGER_COORD = [(8, 6), (12, 10), (16, 14), (20, 18)]
 THUMB_COORD = [(4, 5), ]  # Thumb tip and index MCP
 MP_DRAW = mp.solutions.drawing_utils  # Used to draw the hands
@@ -67,8 +67,10 @@ def start_serial():
     serial_com = None
     my_ports = [tuple(p) for p in list(serial.tools.list_ports.comports())]
     for ports in my_ports:
+        print(ports)
         if PORT_NAME in ports[0]:
-            serial_com = serial.Serial(port=PORT_NAME, baudrate=BAUD_RATE)
+            serial_com = serial.Serial(port=PORT_NAME, baudrate=BAUD_RATE,
+                                       timeout=1)
             if serial_com.isOpen():
                 serial_com.close()
             serial_com.open()
@@ -382,14 +384,13 @@ def keyboard_input(count_decimal, success):
     return count_decimal, success
 
 
-def display_text(image, decimal, binary, count_decimal, serial_com):
+def display_text(image, num_vals, count_decimal, serial_com):
     """
     This puts the text on the image for when it is shown.
 
     Parameter:
         image (ndarray): array used to represent the image
-        decimal (int): decimal representation of fingers that are up
-        binary (int): binary number calculated
+        num_vals (list): contains decimal, binary, last printed val and type
         count_decimal (bool): determines if it is counting in decimal
         serial_com (Serial): the serial connection to the specified port
 
@@ -397,16 +398,20 @@ def display_text(image, decimal, binary, count_decimal, serial_com):
     """
     if count_decimal:
         count_str = "Decimal"
-        display_number = decimal
+        display_number = num_vals[0]
     else:
         count_str = "Binary"
-        display_number = binary
+        display_number = num_vals[1]
     cv2.putText(image, str(display_number), (150, 150),
                 cv2.FONT_HERSHEY_PLAIN, 12, (0, 255, 0), 12)
     cv2.putText(image, f"Counting in {count_str}", (150, 200),
                 cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255), 2)
-    if serial_com:
-        serial_com.write(f'{count_str}:{display_number}'.encode('ascii'))
+    if serial_com and (display_number != num_vals[2] or
+                       count_str != num_vals[3]):
+        serial_com.write(f'{count_str}:\n'.encode('ascii'))
+        serial_com.write(f'{display_number}\n'.encode('ascii'))
+        num_vals[2] = display_number
+        num_vals[3] = count_str
 
 
 def main():
@@ -430,8 +435,7 @@ def main():
         rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         results = HANDS.process(rgb_image)
         multi_land_marks = results.multi_hand_landmarks
-        decimal = 0
-        binary = 0
+        num_vals = [0, 0, -1, ""]  # decimal, binary and previous printed val
 
         if multi_land_marks:
             for hand_num, _hand in enumerate(multi_land_marks):
@@ -446,11 +450,12 @@ def main():
             hand_sideways = is_hand_sideways(hand_list)
             draw_points(hand_list, image, hand_dict)
             finger_list = collect_finger_points(hand_list)
-            decimal, binary = finger_counter(finger_list, hand_sideways)
+            num_vals[0], num_vals[1] = finger_counter(finger_list,
+                                                      hand_sideways)
             print_hand_number(image, hand_list, hand_sideways, count_decimal)
 
         count_decimal, success = keyboard_input(count_decimal, success)
-        display_text(image, decimal, binary, count_decimal, serial_com)
+        display_text(image, num_vals, count_decimal, serial_com)
         cv2.imshow("Counting number of fingers", image)
 
     cap.release()
