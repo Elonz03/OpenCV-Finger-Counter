@@ -33,7 +33,7 @@ import mediapipe as mp
 import serial
 import serial.tools.list_ports
 
-PORT_NAME = '/dev/tty.usbserial-141320'
+PORT_NAME = '/dev/cu.usbserial-141320'
 BAUD_RATE = 9600
 FINGER_COORD = [(8, 6), (12, 10), (16, 14), (20, 18)]
 THUMB_COORD = [(4, 5), ]  # Thumb tip and index MCP
