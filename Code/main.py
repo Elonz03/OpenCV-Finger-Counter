@@ -242,6 +242,16 @@ def is_hand_sideways(hand_list):
 
 
 def find_num_of_sideways_hands(hand_index, hand_sideways, hand_tot):
+    """
+
+    Parameter
+        hand_index (int): number of the hand being processed
+        hand_sideways (list):  booleans relating to if the hand is
+                               sideways/downwards
+        hand_tot (int): total number of hands on the screen
+
+    return (int): number of hands sideways indexed after the current hand
+    """
     if hand_index != hand_tot - 1:
         num_of_hands_sideways = hand_sideways[hand_index + 1:].count(True)
     else:
@@ -325,26 +335,26 @@ def print_hand_number(image, hand_list, hand_sideways, count_decimal):
 
     return: None
     """
-    hand_tot = len(hand_list)
     for index, hand in enumerate(hand_list):
         angle, hand_downwards, hand_leftwards = calculate_hand_angle(hand)
 
-        y_multiplier = -1 / 2 * cos(angle) if hand_downwards else cos(angle)
-        x_multiplier = sin(angle) / 2.5 if hand_leftwards else sin(angle) * 1.2
-        wrist_x = hand[0][0]
-        wrist_y = hand[0][1]
+        multiplier = (
+            sin(angle) / 2.5 if hand_leftwards else sin(angle) * 1.2,  # x-pos
+            -1 / 2 * cos(angle) if hand_downwards else cos(angle)  # y-pos
+        )
+        wrist = (hand[0][0], hand[0][1])
         if count_decimal:
-            text = str(hand_tot - index)
+            text = str(len(hand_list) - index)
         else:
             num_of_hands_sideways = find_num_of_sideways_hands(index,
                                                                hand_sideways,
-                                                               hand_tot)
+                                                               len(hand_list))
             text = (None if hand_sideways[index] else
-                    str(hand_tot - num_of_hands_sideways))
+                    str(len(hand_list) - num_of_hands_sideways))
         text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_COMPLEX, 5, 5)
         text_place = (
-            int(wrist_x + (x_multiplier * text_size[1])),
-            int(wrist_y + (y_multiplier * text_size[0][0]))
+            int(wrist[0] + (multiplier[0] * text_size[1])),  # x-pos
+            int(wrist[1] + (multiplier[1] * text_size[0][0]))  # y-pos
         )
         cv2.putText(image, text, text_place,
                     cv2.FONT_HERSHEY_PLAIN, 5, (255, 255, 255), 5)
@@ -391,13 +401,12 @@ def display_text(image, decimal, binary, count_decimal, serial_com):
     else:
         count_str = "Binary"
         display_number = binary
-    lcd_message = f'{count_str}:{display_number}'
     cv2.putText(image, str(display_number), (150, 150),
                 cv2.FONT_HERSHEY_PLAIN, 12, (0, 255, 0), 12)
     cv2.putText(image, f"Counting in {count_str}", (150, 200),
                 cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255), 2)
     if serial_com:
-        serial_com.write(lcd_message.encode('ascii'))
+        serial_com.write(f'{count_str}:{display_number}'.encode('ascii'))
 
 
 def main():
@@ -425,8 +434,7 @@ def main():
         binary = 0
 
         if multi_land_marks:
-            tot_num_of_hands = len(multi_land_marks)
-            for hand_num in range(tot_num_of_hands):
+            for hand_num in range(len(multi_land_marks)):
 
                 if hand_num not in hand_dict:
                     hand_dict[hand_num] = (randint(0, 255), randint(0, 255),
