@@ -434,13 +434,12 @@ def main():
         binary = 0
 
         if multi_land_marks:
-            for hand_num in range(len(multi_land_marks)):
+            for hand_num, _hand in enumerate(multi_land_marks):
 
                 if hand_num not in hand_dict:
                     hand_dict[hand_num] = (randint(0, 255), randint(0, 255),
                                            randint(0, 255))
-                hand_lms = multi_land_marks[hand_num]
-                MP_DRAW.draw_landmarks(image, hand_lms,
+                MP_DRAW.draw_landmarks(image, multi_land_marks[hand_num],
                                        MP_HANDS.HAND_CONNECTIONS)
 
             hand_list = convert_coords_to_pixels(multi_land_marks, image)
