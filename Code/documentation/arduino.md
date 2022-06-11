@@ -27,6 +27,12 @@ using the following command in the terminal:
 ls /dev/tty* | grep usb
 ```
 
+## Adding nRF52 Feather to the Arduino IDE
+To add the board to the Arduino IDE to be programmed, this [guide](https://learn.adafruit.com/bluefruit-nrf52-feather-learning-guide/arduino-bsp-setup)
+was used. It provides example sketches for how serial communication works
+for this board as well as the BLE communication.
+
+
 ## Future work
 ### Bluetooth communication
 The nRF52 Feather Express board has BLE capabilities. This means Bluetooth
